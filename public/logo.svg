@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="54" viewBox="0 0 220 54" fill="none">
+  <rect width="220" height="54" rx="10" fill="#0F3D8C"/>
+  <path d="M25 14h10v26H25z" fill="#fff"/>
+  <path d="M40 14h10v26H40z" fill="#7FB3FF"/>
+  <text x="62" y="34" fill="#fff" font-size="19" font-family="Verdana, sans-serif" font-weight="700">INVOTICS</text>
+</svg>

@@ -1,0 +1,304 @@
+export type UUID = string;
+export type LocalDate = string;
+export type LocalDateTime = string;
+export type Decimal = number;
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+}
+
+export interface AuthUser {
+  id: UUID;
+  email: string;
+  username: string | null;
+  phoneNumber: string | null;
+  profilePictureUrl: string | null;
+  role: string;
+  isEmailVerified: boolean;
+  isActive?: boolean;
+  lastLoginAt?: LocalDateTime | null;
+  createdAt?: LocalDateTime | null;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: AuthUser;
+  message?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+  notificationToken: string | null;
+}
+
+export interface WebpanelUserResponse {
+  id: UUID;
+  email: string;
+  username: string | null;
+  phoneNumber: string | null;
+  profilePictureUrl: string | null;
+  role: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: LocalDateTime | null;
+}
+
+export type InvoiceStatus =
+  | "DRAFT"
+  | "SENT"
+  | "PAID"
+  | "PENDING"
+  | "PARTIALLY_PAID"
+  | "PARTIAL"
+  | "OVERDUE"
+  | "CANCELLED"
+  | string;
+
+export interface StatsWindow {
+  activity?: {
+    overallLastActivityAt?: LocalDateTime | null;
+  };
+  counts?: {
+    invoices?: number;
+    invoicesByStatus?: Record<string, number>;
+    [key: string]: number | Record<string, number> | undefined;
+  };
+  totals?: {
+    invoiceTotalAmount?: Decimal;
+    paymentTotalAmount?: Decimal;
+    expenseTotalAmount?: Decimal;
+  };
+  lastUpdatedAt?: Record<string, LocalDateTime | null>;
+}
+
+export interface WebpanelUserStatsResponse {
+  userId: UUID;
+  email?: string | null;
+  username?: string | null;
+  role?: string;
+  isEmailVerified?: boolean;
+  isActive?: boolean;
+  createdAt?: LocalDateTime | null;
+  lastLoginAt?: LocalDateTime | null;
+  allTime?: StatsWindow;
+  last30Days?: StatsWindow;
+}
+
+export interface WebpanelInvoiceSummaryResponse {
+  id: UUID;
+  userId: UUID;
+  clientId: UUID | null;
+  clientName: string | null;
+  invoiceNumber: string | null;
+  invoiceDate: LocalDate | null;
+  dueDate: LocalDate | null;
+  totalAmount: Decimal | null;
+  currency: string | null;
+  status: InvoiceStatus;
+  isSynced: boolean;
+  isDeleted: boolean;
+  createdAt: LocalDateTime | null;
+  updatedAt: LocalDateTime | null;
+}
+
+export interface InvoiceItemResponse {
+  id: UUID;
+  inventoryItemId: UUID;
+  name: string;
+  description: string | null;
+  quantity: Decimal;
+  unitPrice: Decimal;
+  netPrice: Decimal;
+  discount: Decimal | null;
+  discountType: string | null;
+}
+
+export interface InvoiceDetailResponse {
+  id: UUID;
+  invoiceNumber: string;
+  poNumber: string | null;
+  invoiceDate: LocalDate;
+  dueDate: LocalDate;
+  subtotal: Decimal;
+  discountAmount: Decimal;
+  taxAmount: Decimal;
+  shippingCost: Decimal;
+  totalAmount: Decimal;
+  status: InvoiceStatus;
+  discountType: string | null;
+  discountValue: Decimal;
+  notes: string | null;
+  currency: string;
+  language: string | null;
+  signatureOffset: string | null;
+  stampOffset: string | null;
+  signatureScale: string | null;
+  stampScale: string | null;
+  dateSent: LocalDateTime | null;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  clientId: UUID;
+  taxId: UUID | null;
+  termsId: UUID | null;
+  paymentInstructionId: UUID | null;
+  templateId: UUID | null;
+  signatureId: UUID | null;
+  stampId: UUID | null;
+  items: InvoiceItemResponse[];
+}
+
+export interface ClientResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  credit: Decimal;
+  currencyCode: string | null;
+  emailAddress: string | null;
+  phone: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: string | null;
+  country: string | null;
+  companyName: string | null;
+  clientId: string | null;
+  faxNumber: string | null;
+  additionalNotes: string | null;
+  rating: number | null;
+  openingBalance: Decimal;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface TaxResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  rate: Decimal;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface TermsResponse {
+  id: UUID;
+  businessId: UUID;
+  title: string;
+  description: string | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface PaymentInstructionResponse {
+  id: UUID;
+  businessId: UUID;
+  fieldsJson: string;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface TemplateResponse {
+  id: UUID;
+  businessId: UUID;
+  templateName: string;
+  templateImage: string | null;
+  templateStyle: number;
+  isCustom: boolean;
+  isSaved: boolean;
+  color: string | null;
+  headerAlpha: number;
+  backgroundOpacity: number;
+  description: string | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+  headerId: UUID | null;
+  backgroundId: UUID | null;
+  signatureId: UUID | null;
+  stampId: UUID | null;
+}
+
+export interface HeaderResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  image: string | null;
+  description: string | null;
+  isCustom: boolean;
+  backgroundType: string;
+  colorHex: string | null;
+  themeType: string | null;
+  themeAlpha: number | null;
+  themeOverlayHex: string | null;
+  themeOverlayAlpha: number | null;
+  imageAlpha: number | null;
+  imageScaleType: string | null;
+  imageOverlayHex: string | null;
+  imageOverlayAlpha: number | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface BackgroundResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  image: string | null;
+  description: string | null;
+  isCustom: boolean;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface SignatureResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  image: string | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface StampResponse {
+  id: UUID;
+  businessId: UUID;
+  name: string;
+  image: string | null;
+  description: string | null;
+  isCustom: boolean;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
+export interface WebpanelInvoiceFullResponse {
+  invoice: InvoiceDetailResponse;
+  client: ClientResponse;
+  tax: TaxResponse | null;
+  terms: TermsResponse | null;
+  paymentInstruction: PaymentInstructionResponse | null;
+  template: TemplateResponse | null;
+  header: HeaderResponse | null;
+  background: BackgroundResponse | null;
+  signature: SignatureResponse | null;
+  stamp: StampResponse | null;
+}
