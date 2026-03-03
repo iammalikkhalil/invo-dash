@@ -11,12 +11,12 @@ import UserCard from "@/components/UserCard";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
 import { filterByQuery } from "@/lib/search";
-import type { WebpanelUserResponse } from "@/lib/types";
+import type { WebpanelUserWithStatsResponse } from "@/lib/types";
 
 export default function UsersPage() {
   const router = useRouter();
 
-  const [users, setUsers] = useState<WebpanelUserResponse[]>([]);
+  const [users, setUsers] = useState<WebpanelUserWithStatsResponse[]>([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function UsersPage() {
     setError("");
 
     try {
-      const response = await api.getAllUsers();
+      const response = await api.getAllUsersWithStats();
       setUsers(response ?? []);
     } catch (loadError) {
       if (isUnauthorizedError(loadError)) {

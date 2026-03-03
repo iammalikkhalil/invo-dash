@@ -49,15 +49,17 @@ Response (`data`: `AuthResponse`)
 
 ---
 
-## 2) Get all users
+## 2) Get all users with stats
 
-GET `/v1/webpanel/getAllUsers`
+GET `/v1/webpanel/getAllUsersWithStats`
 
-Response (`data`: `WebpanelUserResponse[]`)
+Use this endpoint for the users list screen.
+
+Response (`data`: `WebpanelUserWithStatsResponse[]`)
 ```json
 {
   "success": true,
-  "message": "Users fetched successfully",
+  "message": "Users with stats fetched successfully",
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -68,7 +70,22 @@ Response (`data`: `WebpanelUserResponse[]`)
       "role": "USER",
       "isEmailVerified": true,
       "isActive": true,
-      "createdAt": "2026-02-01T10:15:30"
+      "createdAt": "2026-02-01T10:15:30",
+      "stats": {
+        "lastLoginAt": "2026-03-01T09:00:00",
+        "allTime": {
+          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
+          "counts": { "invoices": 50, "payments": 20, "expenses": 18 },
+          "totals": { "invoiceTotalAmount": 12000.5, "paymentTotalAmount": 8000, "expenseTotalAmount": 900.25 },
+          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
+        },
+        "last30Days": {
+          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
+          "counts": { "invoices": 10, "payments": 4, "expenses": 3 },
+          "totals": { "invoiceTotalAmount": 2500, "paymentTotalAmount": 1200, "expenseTotalAmount": 110 },
+          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
+        }
+      }
     }
   ]
 }
@@ -76,7 +93,7 @@ Response (`data`: `WebpanelUserResponse[]`)
 
 ---
 
-## 3) User stats (all-time + last 30 days)
+## 3) User stats (single user, all-time + last 30 days)
 
 GET `/v1/webpanel/statsByUserId?userId=<UUID>`
 

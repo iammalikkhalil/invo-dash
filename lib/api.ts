@@ -5,7 +5,7 @@ import type {
   LoginRequest,
   WebpanelInvoiceFullResponse,
   WebpanelInvoiceSummaryResponse,
-  WebpanelUserResponse,
+  WebpanelUserWithStatsResponse,
   WebpanelUserStatsResponse,
 } from "@/lib/types";
 
@@ -129,8 +129,8 @@ export const api = {
     });
   },
 
-  getAllUsers() {
-    return apiRequest<WebpanelUserResponse[]>("/v1/webpanel/getAllUsers");
+  getAllUsersWithStats() {
+    return apiRequest<WebpanelUserWithStatsResponse[]>("/v1/webpanel/getAllUsersWithStats");
   },
 
   async getUserStats(userId: string) {

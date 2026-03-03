@@ -34,6 +34,87 @@ export interface LoginRequest {
   notificationToken: string | null;
 }
 
+export interface WebpanelUserActivityStats {
+  overallLastActivityAt: LocalDateTime | null;
+}
+
+export interface WebpanelUserCountsStats {
+  businesses: number;
+  clients: number;
+  invoices: number;
+  invoicesByStatus: Record<string, number>;
+  invoiceSynced: number;
+  payments: number;
+  expenses: number;
+  expenseSynced: number;
+  inventoryItems: number;
+  merchants: number;
+  templates: number;
+  templatesSaved: number;
+  templatesCustom: number;
+  paymentInstructions: number;
+  taxes: number;
+  terms: number;
+  headers: number;
+  backgrounds: number;
+  signatures: number;
+  stamps: number;
+  itemCategories: number;
+  unitTypes: number;
+}
+
+export interface WebpanelUserTotalsStats {
+  invoiceTotalAmount: Decimal;
+  paymentTotalAmount: Decimal;
+  expenseTotalAmount: Decimal;
+}
+
+export interface WebpanelUserLastUpdatedAtStats {
+  businesses: LocalDateTime | null;
+  clients: LocalDateTime | null;
+  invoices: LocalDateTime | null;
+  payments: LocalDateTime | null;
+  expenses: LocalDateTime | null;
+  inventoryItems: LocalDateTime | null;
+  merchants: LocalDateTime | null;
+  templates: LocalDateTime | null;
+  paymentInstructions: LocalDateTime | null;
+  taxes: LocalDateTime | null;
+  terms: LocalDateTime | null;
+  headers: LocalDateTime | null;
+  backgrounds: LocalDateTime | null;
+  signatures: LocalDateTime | null;
+  stamps: LocalDateTime | null;
+  itemCategories: LocalDateTime | null;
+  unitTypes: LocalDateTime | null;
+}
+
+export interface WebpanelUserStatsSection {
+  activity: WebpanelUserActivityStats;
+  counts: WebpanelUserCountsStats;
+  totals: WebpanelUserTotalsStats;
+  lastUpdatedAt: WebpanelUserLastUpdatedAtStats;
+}
+
+export interface WebpanelUserStatsSummary {
+  lastLoginAt: LocalDateTime | null;
+  allTime: WebpanelUserStatsSection;
+  last30Days: WebpanelUserStatsSection;
+}
+
+export interface WebpanelUserWithStatsResponse {
+  id: UUID;
+  email: string;
+  username: string | null;
+  phoneNumber: string | null;
+  profilePictureUrl: string | null;
+  role: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: LocalDateTime | null;
+  stats: WebpanelUserStatsSummary;
+}
+
 export interface WebpanelUserResponse {
   id: UUID;
   email: string;
@@ -57,23 +138,6 @@ export type InvoiceStatus =
   | "CANCELLED"
   | string;
 
-export interface StatsWindow {
-  activity?: {
-    overallLastActivityAt?: LocalDateTime | null;
-  };
-  counts?: {
-    invoices?: number;
-    invoicesByStatus?: Record<string, number>;
-    [key: string]: number | Record<string, number> | undefined;
-  };
-  totals?: {
-    invoiceTotalAmount?: Decimal;
-    paymentTotalAmount?: Decimal;
-    expenseTotalAmount?: Decimal;
-  };
-  lastUpdatedAt?: Record<string, LocalDateTime | null>;
-}
-
 export interface WebpanelUserStatsResponse {
   userId: UUID;
   email?: string | null;
@@ -83,8 +147,8 @@ export interface WebpanelUserStatsResponse {
   isActive?: boolean;
   createdAt?: LocalDateTime | null;
   lastLoginAt?: LocalDateTime | null;
-  allTime?: StatsWindow;
-  last30Days?: StatsWindow;
+  allTime?: WebpanelUserStatsSection;
+  last30Days?: WebpanelUserStatsSection;
 }
 
 export interface WebpanelInvoiceSummaryResponse {
