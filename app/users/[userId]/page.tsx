@@ -9,6 +9,7 @@ import InvoiceTable from "@/components/InvoiceTable";
 import LoadingState from "@/components/LoadingState";
 import Navbar from "@/components/Navbar";
 import StatsCards from "@/components/StatsCards";
+import { fallbackText, formatDateTime } from "@/lib/format";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
 import type { WebpanelInvoiceSummaryResponse, WebpanelUserStatsResponse } from "@/lib/types";
@@ -84,26 +85,68 @@ export default function UserDetailPage() {
     void Promise.all([loadStats(), loadInvoices()]);
   }, [loadInvoices, loadStats]);
 
+  const lastActivityAt =
+    stats?.allTime?.activity?.overallLastActivityAt ??
+    stats?.last30Days?.activity?.overallLastActivityAt ??
+    stats?.lastLoginAt ??
+    null;
+
   return (
     <main className="page-wrap">
       <Navbar title="User Detail" />
       <section className="content-wrap">
-        <div className="section-header">
-          <h2>User ID: {userId}</h2>
-          <Link className="btn btn-outline" href="/users">
-            Back to Users
-          </Link>
-        </div>
+        <section className="user-detail-hero">
+          <div className="user-detail-main">
+            <p className="user-detail-label">User ID</p>
+            <h2>{userId}</h2>
+            <p className="user-detail-email">{fallbackText(stats?.email)}</p>
+          </div>
 
-        <section className="section-card">
-          <h2>User Stats</h2>
+          <div className="user-detail-badges">
+            <span className="user-pill">{fallbackText(stats?.role, "No Role")}</span>
+            <span className={`user-pill ${stats?.isActive ? "user-pill-ok" : "user-pill-bad"}`}>
+              {stats?.isActive ? "Active" : "Inactive"}
+            </span>
+            <span
+              className={`user-pill ${
+                stats?.isEmailVerified ? "user-pill-info" : "user-pill-neutral"
+              }`}
+            >
+              {stats?.isEmailVerified ? "Email Verified" : "Email Unverified"}
+            </span>
+          </div>
+
+          <div className="user-detail-meta">
+            <article>
+              <p>Created</p>
+              <h4>{formatDateTime(stats?.createdAt)}</h4>
+            </article>
+            <article>
+              <p>Last Login</p>
+              <h4>{formatDateTime(stats?.lastLoginAt)}</h4>
+            </article>
+            <article>
+              <p>Last Activity</p>
+              <h4>{formatDateTime(lastActivityAt)}</h4>
+            </article>
+          </div>
+
+          <div className="user-detail-actions">
+            <Link className="btn btn-outline" href="/users">
+              Back to Users
+            </Link>
+          </div>
+        </section>
+
+        <section className="section-card user-stats-card">
+          <div className="section-header">
+            <h2>Comprehensive Stats</h2>
+          </div>
           {isStatsLoading ? <LoadingState message="Loading stats..." /> : null}
           {!isStatsLoading && statsError ? (
             <ErrorState message={statsError} onRetry={loadStats} />
           ) : null}
-          {!isStatsLoading && !statsError && !stats ? (
-            <EmptyState message="No stats available." />
-          ) : null}
+          {!isStatsLoading && !statsError && !stats ? <EmptyState message="No stats available." /> : null}
           {!isStatsLoading && !statsError && stats ? <StatsCards stats={stats} /> : null}
         </section>
 

@@ -1,44 +1,51 @@
-import type { WebpanelUserWithStatsResponse } from "@/lib/types";
-import { fallbackNumber, fallbackText, formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 
 interface UserCardProps {
-  user: WebpanelUserWithStatsResponse;
+  row: {
+    email: string;
+    role: string;
+    invoicesAll: number;
+    invoices30: number;
+    overdue: number;
+    paymentsAll: number;
+    expensesAll: number;
+    invoiceTotalAll: number;
+    lastActivityAt: string | null;
+    createdAt: string | null;
+  };
   onClick: () => void;
 }
 
-export default function UserCard({ user, onClick }: UserCardProps) {
-  const allTime = user.stats?.allTime;
-  const last30Days = user.stats?.last30Days;
-  const allTimeCounts = allTime?.counts;
-  const last30Counts = last30Days?.counts;
-  const allTimeTotals = allTime?.totals;
-  const overallLastActivityAt =
-    allTime?.activity?.overallLastActivityAt ?? last30Days?.activity?.overallLastActivityAt;
+function compactEmail(email: string, maxLength = 24): string {
+  if (email.length <= maxLength) {
+    return email;
+  }
 
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 1) {
+    return `${email.slice(0, maxLength - 1)}...`;
+  }
+
+  const domain = email.slice(atIndex);
+  const localLength = Math.max(4, maxLength - domain.length - 3);
+  return `${email.slice(0, localLength)}...${domain}`;
+}
+
+export default function UserCard({ row, onClick }: UserCardProps) {
   return (
-    <button type="button" className="user-card" onClick={onClick}>
-      <h3>{fallbackText(user.username, "No Username")}</h3>
-      <p><strong>Email:</strong> {fallbackText(user.email)}</p>
-      <p><strong>Phone:</strong> {fallbackText(user.phoneNumber)}</p>
-      <p><strong>Role:</strong> {fallbackText(user.role)}</p>
-      <p><strong>Status:</strong> {user.isActive ? "Active" : "Inactive"}</p>
-      <p><strong>Created:</strong> {formatDate(user.createdAt)}</p>
-      <p>
-        <strong>All-time:</strong>{" "}
-        {fallbackNumber(allTimeCounts?.invoices)} invoices,{" "}
-        {fallbackNumber(allTimeCounts?.payments)} payments,{" "}
-        {fallbackNumber(allTimeCounts?.expenses)} expenses
-      </p>
-      <p>
-        <strong>Last 30d:</strong>{" "}
-        {fallbackNumber(last30Counts?.invoices)} invoices,{" "}
-        {fallbackNumber(last30Counts?.payments)} payments
-      </p>
-      <p>
-        <strong>Invoice total:</strong>{" "}
-        {formatCurrency(allTimeTotals?.invoiceTotalAmount, "USD")}
-      </p>
-      <p><strong>Last activity:</strong> {formatDateTime(overallLastActivityAt)}</p>
+    <button type="button" className="users-table-row" onClick={onClick}>
+      <span className="users-cell users-cell-email" title={row.email}>
+        {compactEmail(row.email)}
+      </span>
+      <span className="users-cell">{row.role}</span>
+      <span className="users-cell users-cell-number">{row.invoicesAll}</span>
+      <span className="users-cell users-cell-number">{row.invoices30}</span>
+      <span className="users-cell users-cell-number">{row.overdue}</span>
+      <span className="users-cell users-cell-number">{row.paymentsAll}</span>
+      <span className="users-cell users-cell-number">{row.expensesAll}</span>
+      <span className="users-cell">{formatCurrency(row.invoiceTotalAll, "USD")}</span>
+      <span className="users-cell">{formatDateTime(row.lastActivityAt)}</span>
+      <span className="users-cell">{formatDate(row.createdAt)}</span>
     </button>
   );
 }
