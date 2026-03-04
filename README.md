@@ -1,4 +1,4 @@
-# 📘 WEBPANEL ADMIN Version 1.0
+# 📘 WEBPANEL ADMIN Version 1.1
 
 Framework: **Next.js (JavaScript)**
 Styling: **Plain CSS (Global Stylesheet)**
