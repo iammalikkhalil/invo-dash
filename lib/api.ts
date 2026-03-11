@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   AuthResponse,
   LoginRequest,
+  WebpanelInventoryItemResponse,
   WebpanelInvoiceFullResponse,
   WebpanelInvoiceSummaryResponse,
   WebpanelUserWithStatsResponse,
@@ -158,5 +159,10 @@ export const api = {
     return apiRequest<WebpanelInvoiceFullResponse>(
       `/v1/webpanel/invoices/${encodeURIComponent(invoiceId)}`,
     );
+  },
+
+  getInventoryItems(userId?: string) {
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+    return apiRequest<WebpanelInventoryItemResponse[]>(`/v1/webpanel/inventory-items${query}`);
   },
 };

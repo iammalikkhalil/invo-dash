@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Logo from "@/components/Logo";
 import { clearAccessToken } from "@/lib/auth";
 
 interface NavbarProps {
@@ -20,7 +19,6 @@ export default function Navbar({ title, showLogout = true }: NavbarProps) {
   return (
     <header className="navbar">
       <div className="navbar-left">
-        <Logo />
         <h1>{title}</h1>
       </div>
       {showLogout ? (

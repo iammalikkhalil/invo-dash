@@ -8,6 +8,7 @@ import ErrorState from "@/components/ErrorState";
 import InvoiceView from "@/components/InvoiceView";
 import LoadingState from "@/components/LoadingState";
 import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 import { api, ApiError, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
 import type { WebpanelInvoiceFullResponse } from "@/lib/types";
@@ -61,9 +62,11 @@ export default function InvoiceDetailPage() {
   }, [loadInvoice]);
 
   return (
-    <main className="page-wrap">
-      <Navbar title="Invoice Detail" />
-      <section className="content-wrap">
+    <main className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <Navbar title="Invoice Detail" />
+        <section className="content-wrap">
         <div className="section-header">
           <h2>Invoice ID: {invoiceId}</h2>
           <Link className="btn btn-outline" href={`/users/${userId}`}>
@@ -75,7 +78,8 @@ export default function InvoiceDetailPage() {
         {!isLoading && error ? <ErrorState message={error} onRetry={loadInvoice} /> : null}
         {!isLoading && !error && !data ? <EmptyState message="No invoice data available." /> : null}
         {!isLoading && !error && data ? <InvoiceView data={data} /> : null}
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

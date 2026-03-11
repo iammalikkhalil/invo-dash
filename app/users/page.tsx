@@ -7,6 +7,7 @@ import ErrorState from "@/components/ErrorState";
 import LoadingState from "@/components/LoadingState";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
+import Sidebar from "@/components/Sidebar";
 import UserCard from "@/components/UserCard";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
@@ -497,9 +498,11 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <main className="page-wrap">
-      <Navbar title="Users" />
-      <section className="content-wrap">
+    <main className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <Navbar title="Users" />
+        <section className="content-wrap">
         <SearchBar
           value={queryInput}
           onChange={setQueryInput}
@@ -1010,7 +1013,8 @@ export default function UsersPage() {
             <EmptyState message="No users match your filters." />
           )
         ) : null}
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

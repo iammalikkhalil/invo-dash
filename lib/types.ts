@@ -168,6 +168,24 @@ export interface WebpanelInvoiceSummaryResponse {
   updatedAt: LocalDateTime | null;
 }
 
+export interface WebpanelInventoryItemResponse {
+  id: UUID;
+  userId: UUID;
+  name: string;
+  description: string | null;
+  unitPrice: Decimal;
+  netPrice: Decimal;
+  discount: Decimal | null;
+  discountType: string | null;
+  taxId: UUID | null;
+  unitTypeId: UUID | null;
+  itemCategoryId: UUID | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime | null;
+  updatedAt: LocalDateTime | null;
+  deletedAt: LocalDateTime | null;
+}
+
 export interface InvoiceItemResponse {
   id: UUID;
   inventoryItemId: UUID;

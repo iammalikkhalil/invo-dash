@@ -8,6 +8,7 @@ import ErrorState from "@/components/ErrorState";
 import InvoiceTable from "@/components/InvoiceTable";
 import LoadingState from "@/components/LoadingState";
 import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 import StatsCards from "@/components/StatsCards";
 import { fallbackText, formatDateTime } from "@/lib/format";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
@@ -92,9 +93,11 @@ export default function UserDetailPage() {
     null;
 
   return (
-    <main className="page-wrap">
-      <Navbar title="User Detail" />
-      <section className="content-wrap">
+    <main className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <Navbar title="User Detail" />
+        <section className="content-wrap">
         <section className="user-detail-hero">
           <div className="user-detail-main">
             <p className="user-detail-label">User ID</p>
@@ -160,7 +163,8 @@ export default function UserDetailPage() {
             onSelect={(invoiceId) => router.push(`/users/${userId}/invoices/${invoiceId}`)}
           />
         ) : null}
-      </section>
+        </section>
+      </div>
     </main>
   );
 }
