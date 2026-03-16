@@ -11,6 +11,11 @@ const navItems = [
     isActive: (pathname: string) => pathname.startsWith("/users"),
   },
   {
+    label: "Invoice Preview",
+    href: "/invoice-preview",
+    isActive: (pathname: string) => pathname.startsWith("/invoice-preview"),
+  },
+  {
     label: "Inventory Items",
     href: "/inventory-items",
     isActive: (pathname: string) => pathname.startsWith("/inventory-items"),

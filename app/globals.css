@@ -43,6 +43,13 @@ p {
   min-height: 100vh;
 }
 
+.invoice-pdf-page {
+  margin: 0;
+  padding: 0;
+  width: 210mm;
+  background: #fff;
+}
+
 .app-shell {
   min-height: 100vh;
   display: grid;
@@ -1052,7 +1059,6 @@ th {
   color: var(--color-text);
   line-height: 1.5;
 }
-
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1117,4 +1123,69 @@ th {
     grid-template-columns: minmax(120px, 1.2fr) 1fr 1fr;
     gap: 0.45rem;
   }
+
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body.invoice-print-mode {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+    background: #fff !important;
+  }
+
+  body.invoice-print-mode {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.invoice-print-mode .app-sidebar,
+  body.invoice-print-mode .navbar {
+    display: none !important;
+  }
+
+  body.invoice-print-mode .app-shell {
+    display: block !important;
+    background: #fff !important;
+  }
+
+  body.invoice-print-mode .app-main {
+    width: 100% !important;
+  }
+
+  body.invoice-print-mode .content-wrap {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  body.invoice-print-mode .content-wrap > *:not(.invoice-print-root) {
+    display: none !important;
+  }
+
+  body.invoice-print-mode .invoice-print-root {
+    display: block !important;
+  }
+
+  body.invoice-print-mode .invoice-print-root .paperScaleHeight {
+    height: auto !important;
+  }
+
+  body.invoice-print-mode .invoice-print-root .paperScaleWrap {
+    transform: none !important;
+    width: 210mm !important;
+  }
+
+  body.invoice-print-mode .invoice-print-root .pagesStack {
+    gap: 0 !important;
+  }
+}
+

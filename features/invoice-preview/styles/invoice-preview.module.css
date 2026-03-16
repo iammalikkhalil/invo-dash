@@ -1,0 +1,389 @@
+.screen {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.toolbarMeta {
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}
+
+.paperViewport {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f9fbff 0%, #f3f7ff 100%);
+  padding: 1rem;
+}
+
+.paperScaleWrap {
+  width: 595.28px;
+  transform-origin: top left;
+}
+
+.pagesStack {
+  display: grid;
+  gap: 18px;
+}
+
+.pdfDocumentRoot {
+  width: 210mm;
+  margin: 0;
+  padding: 0;
+}
+
+.pagesStackPdf {
+  display: grid;
+  gap: 0;
+  width: 210mm;
+  margin: 0;
+  padding: 0;
+}
+
+.measureHost {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 595.28px;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+}
+
+.paperScaleHeight {
+  width: 100%;
+}
+
+.page {
+  position: relative;
+  width: 595.28px;
+  height: 841.89px;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 10px 28px rgba(15, 61, 140, 0.12);
+  overflow: hidden;
+  border: 1px solid #d8e0ec;
+}
+
+.pageInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pageBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.contentWithBottomTerms {
+  padding-bottom: 168px;
+}
+
+.header {
+  min-height: 92px;
+  border-radius: 0;
+  margin: 0;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 45px;
+  line-height: 45px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.headerLogo {
+  width: 89px;
+  height: 89px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.rowThree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: 10px;
+  align-items: start;
+  margin: 14px 18px 0;
+}
+
+.block {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  padding: 8px;
+  display: grid;
+  gap: 3px;
+}
+
+.blockHeader {
+  margin: 0;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2563eb;
+}
+
+.blockText {
+  margin: 0;
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.metaBlock .blockText {
+  text-align: right;
+}
+
+.itemsWrap {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 14px 18px 0;
+}
+
+.itemsBottomSpacer {
+  height: 56px;
+  margin: 0 18px;
+}
+
+.itemsTable {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  table-layout: fixed;
+  font-size: 10px;
+}
+
+.itemsTable th {
+  border-bottom: 1px solid #d6e0ef;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 5px 4px;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 800;
+  color: #1f3e76;
+}
+
+.itemsTable td {
+  border-bottom: 1px solid #eef3fb;
+  padding: 4px;
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: 700;
+  color: #111827;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.itemsTable tbody tr:nth-child(even) td {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.totalsUnderItems {
+  display: flex;
+  justify-content: flex-end;
+  margin: 14px 18px 0;
+}
+
+.termsBottom {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: min(340px, calc(100% - 36px));
+  z-index: 3;
+}
+
+.paymentBlock {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.paymentMethod {
+  margin: 0;
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: 700;
+}
+
+.paymentFields {
+  display: grid;
+  gap: 3px;
+}
+
+.paymentFields p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 10px;
+}
+
+.totals {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.totalsRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 50px;
+  border-bottom: 1px solid #eaf0fb;
+  padding: 4px 6px;
+}
+
+.totalsRow:last-child {
+  border-bottom: none;
+}
+
+.totalsRow span {
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: 700;
+}
+
+.totalsRow strong {
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: 700;
+}
+
+.finalTotal {
+  color: #fff;
+  font-weight: 800;
+}
+
+.terms {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.terms p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.overlayAsset {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.watermark {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  font-size: 80px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  opacity: 0.12;
+  text-transform: uppercase;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@media print {
+  .toolbar {
+    display: none;
+  }
+
+  .paperViewport {
+    border: none;
+    background: #fff;
+    padding: 0;
+    overflow: visible;
+    width: 210mm !important;
+    margin: 0 !important;
+  }
+
+  .paperScaleHeight {
+    width: 210mm !important;
+    height: auto !important;
+  }
+
+  .paperScaleWrap {
+    transform: none !important;
+    width: 210mm !important;
+    zoom: 100% !important;
+    margin: 0 !important;
+  }
+
+  .pagesStack {
+    width: 210mm !important;
+    gap: 0 !important;
+    margin: 0 !important;
+  }
+
+  .page {
+    width: 210mm !important;
+    height: 297mm !important;
+    box-shadow: none;
+    border: none;
+    margin: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .pageInner {
+    width: 595.28px !important;
+    height: 841.89px !important;
+    transform: scale(1.3333333333);
+    transform-origin: top left;
+  }
+
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .paperViewport {
+    padding: 0.65rem;
+  }
+}
