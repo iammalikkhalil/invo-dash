@@ -1,4 +1,7 @@
 import puppeteer from "puppeteer";
+import { saveInvoicePreviewPayload } from "@/lib/invoice-preview-payload-store";
+import { INVOICE_PREVIEW_ASSET_TOKEN_COOKIE } from "@/lib/invoice-preview-asset-cookie";
+import type { InvoicePreviewDocument } from "@/features/invoice-preview/types/invoice-preview.types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +15,13 @@ const globalPdfBrowser = globalThis as typeof globalThis & {
 
 function sanitizeFileName(input: string): string {
   return input.replace(/[\\/:*?"<>|]/g, "_");
+}
+
+interface PdfRequestBody {
+  filename?: string;
+  data?: InvoicePreviewDocument;
+  assetAuthKey?: string;
+  assetBearerToken?: string;
 }
 
 async function getBrowser(): Promise<BrowserInstance> {
@@ -41,18 +51,41 @@ async function getBrowser(): Promise<BrowserInstance> {
 // Warm the browser once per server process to reduce first-request latency.
 void getBrowser();
 
-export async function GET(request: Request): Promise<Response> {
+async function generatePdfResponse(
+  request: Request,
+  options?: {
+    fileName?: string;
+    data?: InvoicePreviewDocument;
+    assetAuthKey?: string;
+    assetBearerToken?: string;
+  },
+): Promise<Response> {
   let page: Awaited<ReturnType<BrowserInstance["newPage"]>> | null = null;
 
   try {
     const requestUrl = new URL(request.url);
-    const renderUrl = new URL("/invoice-preview?pdf=1", requestUrl.origin).toString();
-    const fileName = sanitizeFileName(
-      requestUrl.searchParams.get("filename") || "invoice-preview",
-    );
+    const payloadKey = options?.data ? saveInvoicePreviewPayload(options.data) : null;
+    const renderPath = payloadKey
+      ? `/invoice-preview?pdf=1&payloadKey=${encodeURIComponent(payloadKey)}${
+          options?.assetAuthKey ? `&assetAuthKey=${encodeURIComponent(options.assetAuthKey)}` : ""
+        }`
+      : `/invoice-preview?pdf=1${
+          options?.assetAuthKey ? `&assetAuthKey=${encodeURIComponent(options.assetAuthKey)}` : ""
+        }`;
+    const renderUrl = new URL(renderPath, requestUrl.origin).toString();
+    const queryFileName = requestUrl.searchParams.get("filename");
+    const fileName = sanitizeFileName(options?.fileName || queryFileName || "invoice-preview");
 
     const browser = await getBrowser();
     page = await browser.newPage();
+    if (options?.assetBearerToken) {
+      await page.setCookie({
+        name: INVOICE_PREVIEW_ASSET_TOKEN_COOKIE,
+        value: encodeURIComponent(options.assetBearerToken),
+        url: requestUrl.origin,
+        path: "/",
+      });
+    }
     page.setDefaultNavigationTimeout(10000);
     page.setDefaultTimeout(5000);
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
@@ -146,4 +179,18 @@ export async function GET(request: Request): Promise<Response> {
       await page.close();
     }
   }
+}
+
+export async function GET(request: Request): Promise<Response> {
+  return generatePdfResponse(request);
+}
+
+export async function POST(request: Request): Promise<Response> {
+  const body = (await request.json().catch(() => null)) as PdfRequestBody | null;
+  return generatePdfResponse(request, {
+    fileName: body?.filename,
+    data: body?.data,
+    assetAuthKey: body?.assetAuthKey,
+    assetBearerToken: body?.assetBearerToken,
+  });
 }

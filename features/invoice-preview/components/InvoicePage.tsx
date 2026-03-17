@@ -7,6 +7,7 @@ import InvoiceTerms from "@/features/invoice-preview/components/InvoiceTerms";
 import InvoiceTotals from "@/features/invoice-preview/components/InvoiceTotals";
 import styles from "@/features/invoice-preview/styles/invoice-preview.module.css";
 import type { InvoicePreviewDocument, InvoicePreviewLineItem } from "@/features/invoice-preview/types/invoice-preview.types";
+import { resolveInvoiceAsset } from "@/lib/invoice-preview-assets";
 
 interface InvoicePageProps {
   data: InvoicePreviewDocument;
@@ -17,6 +18,7 @@ interface InvoicePageProps {
   showTotals: boolean;
   showTermsBottom: boolean;
   showOverlays: boolean;
+  assetAuthKey?: string | null;
   minRows?: number;
 }
 
@@ -36,7 +38,8 @@ export default function InvoicePage({
   showTotals,
   showTermsBottom,
   showOverlays,
-  minRows = 9,
+  assetAuthKey = null,
+  minRows = 0,
 }: InvoicePageProps) {
   const watermark = getWatermark(data.invoice.invoiceStatus);
   const signatureOffset = data.invoice.signatureOffset || { x: 0.6, y: 0.65 };
@@ -46,18 +49,24 @@ export default function InvoicePage({
   const hasTerms = Boolean(showTermsBottom && data.template.showTerms && data.terms?.description?.trim());
   const signatureLeftX = Math.min(signatureOffset.x, 0.4);
   const stampLeftX = Math.min(stampOffset.x, 0.54);
+  const backgroundImage = resolveInvoiceAsset(data.template.backgroundImageUrl, assetAuthKey);
+  const signatureImage = resolveInvoiceAsset(data.signature?.imageUrl, assetAuthKey);
+  const stampImage = resolveInvoiceAsset(data.stamp?.imageUrl, assetAuthKey);
 
   return (
     <article className={styles.page} data-invoice-page="true">
       <div className={styles.pageInner}>
-        {data.template.backgroundImageUrl ? (
+        {backgroundImage.kind === "resolved" && backgroundImage.requestUrl ? (
           <div
             className={styles.pageBg}
             style={{
-              backgroundImage: `url('${data.template.backgroundImageUrl}')`,
+              backgroundImage: `url('${backgroundImage.requestUrl}')`,
               opacity: data.template.backgroundOpacity ?? 1,
             }}
           />
+        ) : null}
+        {backgroundImage.kind === "unsynced" ? (
+          <span className={styles.unsyncedAssetBackgroundNotice}>Background image not synced</span>
         ) : null}
 
         {watermark ? (
@@ -76,6 +85,7 @@ export default function InvoicePage({
               business={data.business}
               template={data.template}
               translations={data.translations}
+              assetAuthKey={assetAuthKey}
             />
           ) : null}
 
@@ -122,10 +132,10 @@ export default function InvoicePage({
           </section>
         ) : null}
 
-        {showOverlays && data.signature?.imageUrl ? (
+        {showOverlays && signatureImage.kind === "resolved" && signatureImage.requestUrl ? (
           <img
-            src={data.signature.imageUrl}
-            alt={data.signature.name}
+            src={signatureImage.requestUrl}
+            alt={data.signature?.name || "Signature"}
             className={styles.overlayAsset}
             style={{
               left: `${signatureLeftX * 100}%`,
@@ -134,11 +144,23 @@ export default function InvoicePage({
             }}
           />
         ) : null}
+        {showOverlays && signatureImage.kind === "unsynced" ? (
+          <span
+            className={styles.overlayUnsyncedAsset}
+            style={{
+              left: `${signatureLeftX * 100}%`,
+              top: `calc(${signatureOffset.y * 100}% + 160px)`,
+              width: `${signatureScale * 595.28}px`,
+            }}
+          >
+            Signature not synced
+          </span>
+        ) : null}
 
-        {showOverlays && data.stamp?.imageUrl ? (
+        {showOverlays && stampImage.kind === "resolved" && stampImage.requestUrl ? (
           <img
-            src={data.stamp.imageUrl}
-            alt={data.stamp.name}
+            src={stampImage.requestUrl}
+            alt={data.stamp?.name || "Stamp"}
             className={styles.overlayAsset}
             style={{
               left: `${stampLeftX * 100}%`,
@@ -146,6 +168,18 @@ export default function InvoicePage({
               width: `${stampScale * 595.28}px`,
             }}
           />
+        ) : null}
+        {showOverlays && stampImage.kind === "unsynced" ? (
+          <span
+            className={styles.overlayUnsyncedAsset}
+            style={{
+              left: `${stampLeftX * 100}%`,
+              top: `calc(${stampOffset.y * 100}% + 160px)`,
+              width: `${stampScale * 595.28}px`,
+            }}
+          >
+            Stamp not synced
+          </span>
         ) : null}
       </div>
     </article>

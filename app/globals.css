@@ -896,7 +896,7 @@ table {
   border-collapse: collapse;
   width: 100%;
   min-width: 680px;
-  background: #fff;
+  /* background: #fff; */
 }
 
 th,
@@ -1123,7 +1123,6 @@ th {
     grid-template-columns: minmax(120px, 1.2fr) 1fr 1fr;
     gap: 0.45rem;
   }
-
 }
 
 @media print {
@@ -1188,4 +1187,3 @@ th {
     gap: 0 !important;
   }
 }
-

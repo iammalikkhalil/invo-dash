@@ -170,8 +170,11 @@ export interface InvoicePreviewHeaderBackground {
   type: HeaderBackgroundType;
   colorHex: string | null;
   themeType: string | null;
-  alpha: number;
-  overlayAlpha: number;
+  alpha: number | null;
+  overlayAlpha: number | null;
+  themeOverlayHex: string | null;
+  imageOverlayHex: string | null;
+  imageAlpha: number | null;
   imageUrl: string | null;
   imageScaleType: ImageScaleType | null;
 }

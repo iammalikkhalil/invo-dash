@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import styles from "@/features/invoice-preview/styles/invoice-preview.module.css";
 import type {
   InvoicePreviewCurrency,
@@ -13,6 +14,49 @@ interface InvoiceItemsTableProps {
   translations: InvoicePreviewTranslations;
   minRows?: number;
   serialStart?: number;
+}
+
+function toRgba(hexColor: string, alpha: number): string {
+  const normalized = hexColor.trim().replace("#", "");
+  const valid =
+    /^[0-9a-fA-F]{6}$/.test(normalized) ||
+    /^[0-9a-fA-F]{3}$/.test(normalized);
+
+  if (!valid) {
+    return `rgba(37, 99, 235, ${alpha})`;
+  }
+
+  const full = normalized.length === 3
+    ? normalized.split("").map((char) => `${char}${char}`).join("")
+    : normalized;
+
+  const r = Number.parseInt(full.slice(0, 2), 16);
+  const g = Number.parseInt(full.slice(2, 4), 16);
+  const b = Number.parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getHeaderTextColor(hexColor: string): "#000000" | "#FFFFFF" {
+  const normalized = hexColor.trim().replace("#", "");
+  const valid =
+    /^[0-9a-fA-F]{6}$/.test(normalized) ||
+    /^[0-9a-fA-F]{3}$/.test(normalized);
+
+  if (!valid) {
+    return "#FFFFFF";
+  }
+
+  const full = normalized.length === 3
+    ? normalized.split("").map((char) => `${char}${char}`).join("")
+    : normalized;
+
+  const r = Number.parseInt(full.slice(0, 2), 16);
+  const g = Number.parseInt(full.slice(2, 4), 16);
+  const b = Number.parseInt(full.slice(4, 6), 16);
+
+  // YIQ contrast formula: higher value means lighter background.
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 150 ? "#000000" : "#FFFFFF";
 }
 
 function formatAmount(value: number, currency: InvoicePreviewCurrency): string {
@@ -32,7 +76,7 @@ export default function InvoiceItemsTable({
   currency,
   template,
   translations,
-  minRows = 9,
+  minRows = 0,
   serialStart = 1,
 }: InvoiceItemsTableProps) {
   if (!template.showItemTable) return null;
@@ -46,6 +90,13 @@ export default function InvoiceItemsTable({
   const headerAlign = "left" as const;
   const bodyAlign = "left" as const;
   const amountAlign = "right" as const;
+  const primaryColor = template.color || "#DC2626";
+  const headerTextColor = getHeaderTextColor(primaryColor);
+  const tableThemeVars = {
+    "--invoice-table-primary": primaryColor,
+    "--invoice-table-primary-soft": toRgba(primaryColor, 0.12),
+    "--invoice-table-primary-contrast": headerTextColor,
+  } as CSSProperties;
   const columnWidths = {
     serial: "6%",
     // Requested set was 98%; keep proportions and normalize to 100%.
@@ -58,7 +109,11 @@ export default function InvoiceItemsTable({
   };
 
   return (
-    <section className={styles.itemsWrap} data-invoice-items-wrap="true">
+    <section
+      className={styles.itemsWrap}
+      data-invoice-items-wrap="true"
+      style={tableThemeVars}
+    >
       <table className={styles.itemsTable} data-invoice-items-table="true">
         <thead data-invoice-items-head="true">
           <tr>

@@ -160,7 +160,7 @@ export default function UserDetailPage() {
         {!isInvoicesLoading && !invoicesError ? (
           <InvoiceTable
             invoices={invoices}
-            onSelect={(invoiceId) => router.push(`/users/${userId}/invoices/${invoiceId}`)}
+            onSelect={(invoiceId) => router.push(`/users/${userId}/invoices/${invoiceId}/v2`)}
           />
         ) : null}
         </section>

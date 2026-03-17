@@ -9,6 +9,8 @@ import type { InvoicePreviewDocument, InvoicePreviewLineItem } from "@/features/
 interface InvoicePreviewScreenProps {
   data: InvoicePreviewDocument;
   pdfMode?: boolean;
+  assetAuthKey?: string | null;
+  assetBearerToken?: string | null;
 }
 
 const A4_WIDTH = 595.28;
@@ -270,7 +272,12 @@ function paginateItems(
   return pages;
 }
 
-export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoicePreviewScreenProps) {
+export default function InvoicePreviewScreen({
+  data,
+  pdfMode = false,
+  assetAuthKey = null,
+  assetBearerToken = null,
+}: InvoicePreviewScreenProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const tableMeasureRef = useRef<HTMLDivElement | null>(null);
   const layoutMeasureRef = useRef<HTMLDivElement | null>(null);
@@ -311,9 +318,18 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
     try {
       const invoiceNumber = data.invoice.invoiceNumber || "invoice-preview";
       const safeName = invoiceNumber.replace(/[\\/:*?"<>|]/g, "_");
-      const response = await fetch(`/api/invoice-preview/pdf?filename=${encodeURIComponent(safeName)}`, {
-        method: "GET",
+      const response = await fetch("/api/invoice-preview/pdf", {
+        method: "POST",
         cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filename: safeName,
+          data,
+          assetAuthKey,
+          assetBearerToken,
+        }),
       });
 
       if (!response.ok) {
@@ -334,7 +350,7 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
     } finally {
       setIsDownloading(false);
     }
-  }, [data.invoice.invoiceNumber, isDownloading]);
+  }, [assetAuthKey, assetBearerToken, data, isDownloading]);
 
   useEffect(() => {
     if (pdfMode) {
@@ -421,11 +437,12 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
             showTotals={isLastPage}
             showTermsBottom={isLastPage}
             showOverlays={isLastPage}
-            minRows={isSinglePageMode ? 0 : itemPages.length > 1 ? 0 : 9}
+            assetAuthKey={assetAuthKey}
+            minRows={0}
           />
         );
       }),
-    [data, itemPages],
+    [assetAuthKey, data, itemPages],
   );
 
   return (
@@ -489,6 +506,7 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
             showTotals
             showTermsBottom={hasTerms}
             showOverlays={false}
+            assetAuthKey={assetAuthKey}
             minRows={0}
           />
         </div>
@@ -502,6 +520,7 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
             showTotals={false}
             showTermsBottom={false}
             showOverlays={false}
+            assetAuthKey={assetAuthKey}
             minRows={0}
           />
         </div>
@@ -515,6 +534,7 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
             showTotals={false}
             showTermsBottom={false}
             showOverlays={false}
+            assetAuthKey={assetAuthKey}
             minRows={0}
           />
         </div>
@@ -528,6 +548,7 @@ export default function InvoicePreviewScreen({ data, pdfMode = false }: InvoiceP
             showTotals
             showTermsBottom={hasTerms}
             showOverlays={false}
+            assetAuthKey={assetAuthKey}
             minRows={0}
           />
         </div>

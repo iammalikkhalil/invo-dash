@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import styles from "@/features/invoice-preview/styles/invoice-preview.module.css";
 import type {
   InvoicePreviewCurrency,
@@ -31,9 +32,12 @@ export default function InvoiceTotals({ totals, currency, template, translations
   const showDiscount = totals.discountAmount > 0;
   const showTax = totals.taxAmount > 0;
   const showShipping = totals.shippingCost > 0;
+  const primaryColorVars = {
+    "--invoice-table-primary": template.color || "#DC2626",
+  } as CSSProperties;
 
   return (
-    <article className={styles.totals}>
+    <article className={styles.totals} style={primaryColorVars}>
       <div className={styles.totalsRow}>
         <span>{translations.subtotalLabel}</span>
         <strong>{formatAmount(totals.subtotal, currency)}</strong>
@@ -58,7 +62,7 @@ export default function InvoiceTotals({ totals, currency, template, translations
       ) : null}
       <div
         className={`${styles.totalsRow} ${styles.finalTotal}`}
-        style={{ background: template.color || "#2563EB" }}
+        style={{ background: template.color || "#DC2626" }}
       >
         <span>{translations.totalLabel}</span>
         <strong>{formatAmount(totals.total, currency)}</strong>
