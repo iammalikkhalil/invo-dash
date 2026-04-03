@@ -11,7 +11,10 @@ import Sidebar from "@/components/Sidebar";
 import UserCard from "@/components/UserCard";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
-import type { WebpanelUserWithStatsResponse } from "@/lib/types";
+import type {
+  WebpanelTestingDeviceResponse,
+  WebpanelUserWithStatsAndAnalyticsResponse,
+} from "@/lib/types";
 
 type SortKey =
   | "lastActivity"
@@ -42,6 +45,8 @@ interface RangeFilters {
   invoiceTotal: NumericRange;
   paymentTotal: NumericRange;
   expenseTotal: NumericRange;
+  sessions: NumericRange;
+  events: NumericRange;
 }
 
 interface UserListRow {
@@ -70,7 +75,29 @@ interface UserListRow {
   paymentTotalAll: number;
   expenseTotalAll: number;
   invoiceStatusCounts: Record<string, number>;
+  analyticsFirstSeenAt: string | null;
+  analyticsFirstSeenTs: number | null;
+  analyticsLastSeenAt: string | null;
+  analyticsLastSeenTs: number | null;
+  totalSessions: number;
+  totalEvents: number;
+  countries: string[];
+  cities: string[];
+  platforms: string[];
+  appVersions: string[];
+  eventNames: string[];
+  deviceIds: string[];
   searchText: string;
+}
+
+function uniqueSorted(values: Array<string | null | undefined>): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
 }
 
 const createInitialRanges = (): RangeFilters => ({
@@ -82,6 +109,8 @@ const createInitialRanges = (): RangeFilters => ({
   invoiceTotal: { min: "", max: "" },
   paymentTotal: { min: "", max: "" },
   expenseTotal: { min: "", max: "" },
+  sessions: { min: "", max: "" },
+  events: { min: "", max: "" },
 });
 
 function toTimestamp(value: string | null | undefined): number | null {
@@ -121,7 +150,8 @@ function withinRange(value: number, range: NumericRange): boolean {
 export default function UsersPage() {
   const router = useRouter();
 
-  const [users, setUsers] = useState<WebpanelUserWithStatsResponse[]>([]);
+  const [users, setUsers] = useState<WebpanelUserWithStatsAndAnalyticsResponse[]>([]);
+  const [testingDevices, setTestingDevices] = useState<WebpanelTestingDeviceResponse[]>([]);
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
@@ -130,6 +160,13 @@ export default function UsersPage() {
   const [createdTo, setCreatedTo] = useState("");
   const [lastActivityFrom, setLastActivityFrom] = useState("");
   const [lastActivityTo, setLastActivityTo] = useState("");
+  const [analyticsLastSeenFrom, setAnalyticsLastSeenFrom] = useState("");
+  const [analyticsLastSeenTo, setAnalyticsLastSeenTo] = useState("");
+  const [countryFilter, setCountryFilter] = useState("ALL");
+  const [cityFilter, setCityFilter] = useState("ALL");
+  const [platformFilter, setPlatformFilter] = useState("ALL");
+  const [appVersionFilter, setAppVersionFilter] = useState("ALL");
+  const [eventNameFilter, setEventNameFilter] = useState("ALL");
   const [ranges, setRanges] = useState<RangeFilters>(createInitialRanges);
   const [invoiceStatusFilters, setInvoiceStatusFilters] = useState<string[]>([]);
 
@@ -142,6 +179,7 @@ export default function UsersPage() {
   const [noTemplatesOnly, setNoTemplatesOnly] = useState(false);
   const [noTaxesOnly, setNoTaxesOnly] = useState(false);
   const [noPaymentInstructionsOnly, setNoPaymentInstructionsOnly] = useState(false);
+  const [excludeTestingDevices, setExcludeTestingDevices] = useState(false);
 
   const [sortKey, setSortKey] = useState<SortKey>("lastActivity");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -166,8 +204,12 @@ export default function UsersPage() {
     setError("");
 
     try {
-      const response = await api.getAllUsersWithStats();
-      setUsers(response ?? []);
+      const [usersResponse, testingDevicesResponse] = await Promise.all([
+        api.getAllUsersWithStatAndAnalytics(),
+        api.getTestingDevices(),
+      ]);
+      setUsers(usersResponse ?? []);
+      setTestingDevices(testingDevicesResponse ?? []);
     } catch (loadError) {
       if (isUnauthorizedError(loadError)) {
         handleUnauthorized();
@@ -198,6 +240,25 @@ export default function UsersPage() {
       const allCounts = allTime.counts;
       const last30Counts = last30.counts;
       const statusCounts = allCounts.invoicesByStatus ?? {};
+      const analytics = user.analytics;
+      const countries = uniqueSorted(analytics?.locations.map((location) => location.country) ?? []);
+      const cities = uniqueSorted(analytics?.locations.map((location) => location.city) ?? []);
+      const platforms = uniqueSorted([
+        ...(analytics?.locations.flatMap((location) => location.platforms) ?? []),
+        ...(analytics?.devices.flatMap((device) => device.platforms) ?? []),
+        ...(analytics?.appVersions.flatMap((version) => version.platforms) ?? []),
+      ]);
+      const appVersions = uniqueSorted([
+        ...(analytics?.appVersions.map((version) => version.appVersion) ?? []),
+        ...(analytics?.locations.flatMap((location) => location.appVersions) ?? []),
+        ...(analytics?.devices.flatMap((device) => device.appVersions) ?? []),
+      ]);
+      const eventNames = uniqueSorted(analytics?.events.map((event) => event.eventName) ?? []);
+      const deviceIds = uniqueSorted([
+        ...(analytics?.devices.map((device) => device.deviceId) ?? []),
+        ...(analytics?.locations.flatMap((location) => location.deviceIds) ?? []),
+        ...(analytics?.appVersions.flatMap((version) => version.deviceIds) ?? []),
+      ]);
 
       const lastActivityAt =
         allTime.activity.overallLastActivityAt ??
@@ -231,7 +292,28 @@ export default function UsersPage() {
         paymentTotalAll: allTime.totals.paymentTotalAmount,
         expenseTotalAll: allTime.totals.expenseTotalAmount,
         invoiceStatusCounts: statusCounts,
-        searchText: `${user.email} ${user.role} ${user.id}`.toLowerCase(),
+        analyticsFirstSeenAt: analytics?.firstSeenAt ?? null,
+        analyticsFirstSeenTs: toTimestamp(analytics?.firstSeenAt),
+        analyticsLastSeenAt: analytics?.lastSeenAt ?? null,
+        analyticsLastSeenTs: toTimestamp(analytics?.lastSeenAt),
+        totalSessions: analytics?.totalSessions ?? 0,
+        totalEvents: analytics?.totalEvents ?? 0,
+        countries,
+        cities,
+        platforms,
+        appVersions,
+        eventNames,
+        deviceIds,
+        searchText: [
+          user.email,
+          user.role,
+          user.id,
+          ...countries,
+          ...cities,
+          ...platforms,
+          ...appVersions,
+          ...eventNames,
+        ].join(" ").toLowerCase(),
       };
     });
   }, [users]);
@@ -257,11 +339,38 @@ export default function UsersPage() {
       .map(([status, count]) => ({ status, count }));
   }, [rows]);
 
+  const countryOptions = useMemo(
+    () => uniqueSorted(rows.flatMap((row) => row.countries)),
+    [rows],
+  );
+  const cityOptions = useMemo(
+    () => uniqueSorted(rows.flatMap((row) => row.cities)),
+    [rows],
+  );
+  const platformOptions = useMemo(
+    () => uniqueSorted(rows.flatMap((row) => row.platforms)),
+    [rows],
+  );
+  const appVersionOptions = useMemo(
+    () => uniqueSorted(rows.flatMap((row) => row.appVersions)),
+    [rows],
+  );
+  const eventNameOptions = useMemo(
+    () => uniqueSorted(rows.flatMap((row) => row.eventNames)),
+    [rows],
+  );
+  const testingDeviceIdSet = useMemo(
+    () => new Set(testingDevices.map((device) => device.deviceId.trim()).filter(Boolean)),
+    [testingDevices],
+  );
+
   const processedRows = useMemo(() => {
     const createdFromTs = parseDateStart(createdFrom);
     const createdToTs = parseDateEnd(createdTo);
     const lastActivityFromTs = parseDateStart(lastActivityFrom);
     const lastActivityToTs = parseDateEnd(lastActivityTo);
+    const analyticsLastSeenFromTs = parseDateStart(analyticsLastSeenFrom);
+    const analyticsLastSeenToTs = parseDateEnd(analyticsLastSeenTo);
 
     const filtered = rows.filter((row) => {
       if (query && !row.searchText.includes(query)) return false;
@@ -287,6 +396,18 @@ export default function UsersPage() {
       ) {
         return false;
       }
+      if (
+        analyticsLastSeenFromTs !== null &&
+        (row.analyticsLastSeenTs === null || row.analyticsLastSeenTs < analyticsLastSeenFromTs)
+      ) {
+        return false;
+      }
+      if (
+        analyticsLastSeenToTs !== null &&
+        (row.analyticsLastSeenTs === null || row.analyticsLastSeenTs > analyticsLastSeenToTs)
+      ) {
+        return false;
+      }
 
       if (!withinRange(row.invoicesAll, ranges.invoices)) return false;
       if (!withinRange(row.paymentsAll, ranges.payments)) return false;
@@ -296,6 +417,8 @@ export default function UsersPage() {
       if (!withinRange(row.invoiceTotalAll, ranges.invoiceTotal)) return false;
       if (!withinRange(row.paymentTotalAll, ranges.paymentTotal)) return false;
       if (!withinRange(row.expenseTotalAll, ranges.expenseTotal)) return false;
+      if (!withinRange(row.totalSessions, ranges.sessions)) return false;
+      if (!withinRange(row.totalEvents, ranges.events)) return false;
 
       if (overdueOnly && row.overdue <= 0) return false;
       if (cancelledOnly && row.cancelled <= 0) return false;
@@ -313,6 +436,14 @@ export default function UsersPage() {
       if (noTemplatesOnly && row.templatesAll > 0) return false;
       if (noTaxesOnly && row.taxesAll > 0) return false;
       if (noPaymentInstructionsOnly && row.paymentInstructionsAll > 0) return false;
+      if (excludeTestingDevices && row.deviceIds.some((deviceId) => testingDeviceIdSet.has(deviceId))) {
+        return false;
+      }
+      if (countryFilter !== "ALL" && !row.countries.includes(countryFilter)) return false;
+      if (cityFilter !== "ALL" && !row.cities.includes(cityFilter)) return false;
+      if (platformFilter !== "ALL" && !row.platforms.includes(platformFilter)) return false;
+      if (appVersionFilter !== "ALL" && !row.appVersions.includes(appVersionFilter)) return false;
+      if (eventNameFilter !== "ALL" && !row.eventNames.includes(eventNameFilter)) return false;
 
       return true;
     });
@@ -346,9 +477,16 @@ export default function UsersPage() {
     });
   }, [
     activityFilter,
+    analyticsLastSeenFrom,
+    analyticsLastSeenTo,
+    appVersionFilter,
     cancelledOnly,
+    cityFilter,
+    countryFilter,
     createdFrom,
     createdTo,
+    excludeTestingDevices,
+    eventNameFilter,
     invoiceStatusFilters,
     lastActivityFrom,
     lastActivityTo,
@@ -358,6 +496,7 @@ export default function UsersPage() {
     noTaxesOnly,
     noTemplatesOnly,
     overdueOnly,
+    platformFilter,
     query,
     ranges,
     refundedOnly,
@@ -365,6 +504,7 @@ export default function UsersPage() {
     rows,
     sortDirection,
     sortKey,
+    testingDeviceIdSet,
     uncollectibleOnly,
   ]);
 
@@ -372,9 +512,15 @@ export default function UsersPage() {
     setCurrentPage(1);
   }, [
     activityFilter,
+    analyticsLastSeenFrom,
+    analyticsLastSeenTo,
+    appVersionFilter,
     cancelledOnly,
+    cityFilter,
+    countryFilter,
     createdFrom,
     createdTo,
+    eventNameFilter,
     invoiceStatusFilters,
     lastActivityFrom,
     lastActivityTo,
@@ -385,6 +531,7 @@ export default function UsersPage() {
     noTemplatesOnly,
     overdueOnly,
     pageSize,
+    platformFilter,
     query,
     ranges,
     refundedOnly,
@@ -419,6 +566,13 @@ export default function UsersPage() {
     if (createdTo) count += 1;
     if (lastActivityFrom) count += 1;
     if (lastActivityTo) count += 1;
+    if (analyticsLastSeenFrom) count += 1;
+    if (analyticsLastSeenTo) count += 1;
+    if (countryFilter !== "ALL") count += 1;
+    if (cityFilter !== "ALL") count += 1;
+    if (platformFilter !== "ALL") count += 1;
+    if (appVersionFilter !== "ALL") count += 1;
+    if (eventNameFilter !== "ALL") count += 1;
 
     (Object.keys(ranges) as Array<keyof RangeFilters>).forEach((key) => {
       if (ranges[key].min) count += 1;
@@ -435,12 +589,20 @@ export default function UsersPage() {
     if (noTemplatesOnly) count += 1;
     if (noTaxesOnly) count += 1;
     if (noPaymentInstructionsOnly) count += 1;
+    if (excludeTestingDevices) count += 1;
     return count;
   }, [
     activityFilter,
+    analyticsLastSeenFrom,
+    analyticsLastSeenTo,
+    appVersionFilter,
     cancelledOnly,
+    cityFilter,
+    countryFilter,
     createdFrom,
     createdTo,
+    excludeTestingDevices,
+    eventNameFilter,
     invoiceStatusFilters,
     lastActivityFrom,
     lastActivityTo,
@@ -450,6 +612,7 @@ export default function UsersPage() {
     noTaxesOnly,
     noTemplatesOnly,
     overdueOnly,
+    platformFilter,
     queryInput,
     ranges,
     refundedOnly,
@@ -481,6 +644,13 @@ export default function UsersPage() {
     setCreatedTo("");
     setLastActivityFrom("");
     setLastActivityTo("");
+    setAnalyticsLastSeenFrom("");
+    setAnalyticsLastSeenTo("");
+    setCountryFilter("ALL");
+    setCityFilter("ALL");
+    setPlatformFilter("ALL");
+    setAppVersionFilter("ALL");
+    setEventNameFilter("ALL");
     setRanges(createInitialRanges());
     setInvoiceStatusFilters([]);
     setOverdueOnly(false);
@@ -492,6 +662,7 @@ export default function UsersPage() {
     setNoTemplatesOnly(false);
     setNoTaxesOnly(false);
     setNoPaymentInstructionsOnly(false);
+    setExcludeTestingDevices(false);
     setSortKey("lastActivity");
     setSortDirection("desc");
     setPageSize(200);
@@ -586,6 +757,106 @@ export default function UsersPage() {
                 value={lastActivityTo}
                 onChange={(event) => setLastActivityTo(event.target.value)}
               />
+            </label>
+
+            <label className="filter-control">
+              <span>Analytics Last Seen From</span>
+              <input
+                className="input"
+                type="date"
+                value={analyticsLastSeenFrom}
+                onChange={(event) => setAnalyticsLastSeenFrom(event.target.value)}
+              />
+            </label>
+
+            <label className="filter-control">
+              <span>Analytics Last Seen To</span>
+              <input
+                className="input"
+                type="date"
+                value={analyticsLastSeenTo}
+                onChange={(event) => setAnalyticsLastSeenTo(event.target.value)}
+              />
+            </label>
+
+            <label className="filter-control">
+              <span>Country</span>
+              <select
+                className="input"
+                value={countryFilter}
+                onChange={(event) => setCountryFilter(event.target.value)}
+              >
+                <option value="ALL">All countries</option>
+                {countryOptions.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-control">
+              <span>City</span>
+              <select
+                className="input"
+                value={cityFilter}
+                onChange={(event) => setCityFilter(event.target.value)}
+              >
+                <option value="ALL">All cities</option>
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-control">
+              <span>Platform</span>
+              <select
+                className="input"
+                value={platformFilter}
+                onChange={(event) => setPlatformFilter(event.target.value)}
+              >
+                <option value="ALL">All platforms</option>
+                {platformOptions.map((platform) => (
+                  <option key={platform} value={platform}>
+                    {platform}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-control">
+              <span>App Version</span>
+              <select
+                className="input"
+                value={appVersionFilter}
+                onChange={(event) => setAppVersionFilter(event.target.value)}
+              >
+                <option value="ALL">All app versions</option>
+                {appVersionOptions.map((appVersion) => (
+                  <option key={appVersion} value={appVersion}>
+                    {appVersion}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-control">
+              <span>Event Name</span>
+              <select
+                className="input"
+                value={eventNameFilter}
+                onChange={(event) => setEventNameFilter(event.target.value)}
+              >
+                <option value="ALL">All event names</option>
+                {eventNameOptions.map((eventName) => (
+                  <option key={eventName} value={eventName}>
+                    {eventName}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 
@@ -781,6 +1052,54 @@ export default function UsersPage() {
                 />
               </div>
             </div>
+
+            <div className="range-card">
+              <p className="range-title">Sessions</p>
+              <div className="range-inputs">
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={ranges.sessions.min}
+                  onChange={(event) => updateRange("sessions", "min", event.target.value)}
+                  placeholder="Min"
+                />
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={ranges.sessions.max}
+                  onChange={(event) => updateRange("sessions", "max", event.target.value)}
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+
+            <div className="range-card">
+              <p className="range-title">Events</p>
+              <div className="range-inputs">
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={ranges.events.min}
+                  onChange={(event) => updateRange("events", "min", event.target.value)}
+                  placeholder="Min"
+                />
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={ranges.events.max}
+                  onChange={(event) => updateRange("events", "max", event.target.value)}
+                  placeholder="Max"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="status-filter-wrap">
@@ -888,6 +1207,14 @@ export default function UsersPage() {
                 onChange={(event) => setNoPaymentInstructionsOnly(event.target.checked)}
               />
               No Payment Instructions
+            </label>
+            <label className="toggle-item">
+              <input
+                type="checkbox"
+                checked={excludeTestingDevices}
+                onChange={(event) => setExcludeTestingDevices(event.target.checked)}
+              />
+              Exclude Testing Devices
             </label>
           </div>
         </section>

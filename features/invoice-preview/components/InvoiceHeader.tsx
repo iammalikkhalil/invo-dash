@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useImageFailureState, usePreloadedImageFailure } from "@/features/invoice-preview/components/useInvoiceAssetLoadState";
 import styles from "@/features/invoice-preview/styles/invoice-preview.module.css";
 import type { InvoicePreviewBusiness, InvoicePreviewInvoice, InvoicePreviewTemplate, InvoicePreviewTranslations } from "@/features/invoice-preview/types/invoice-preview.types";
 import { resolveInvoiceAsset } from "@/lib/invoice-preview-assets";
@@ -77,6 +78,7 @@ function getSizeAndRepeat(scaleType: InvoicePreviewTemplate["headerBackground"][
 
 function resolveHeaderStyle(
   template: InvoicePreviewTemplate,
+  hasLoadFailure: boolean,
   assetAuthKey?: string | null,
 ): HeaderStyleResolution {
   const header = template.headerBackground;
@@ -92,7 +94,7 @@ function resolveHeaderStyle(
     };
   }
 
-  if (header.type === "IMAGE" && headerImage.kind === "resolved" && headerImage.requestUrl) {
+  if (!hasLoadFailure && header.type === "IMAGE" && headerImage.kind === "resolved" && headerImage.requestUrl) {
     const imageOverlayHex =
       normalizeHexColor(header.imageOverlayHex) || normalizeHexColor(header.themeOverlayHex);
     const overlayAlpha = clamp01(header.overlayAlpha);
@@ -172,16 +174,26 @@ export default function InvoiceHeader({
   void invoice;
   const logo = resolveInvoiceAsset(business.logoUrl, assetAuthKey);
   const headerImage = resolveInvoiceAsset(template.headerBackground.imageUrl, assetAuthKey);
+  const [logoFailed, markLogoFailed] = useImageFailureState(logo.requestUrl);
+  const headerImageFailed = usePreloadedImageFailure(
+    headerImage.requestUrl,
+    template.headerBackground.type === "IMAGE" && headerImage.kind === "resolved",
+  );
   const headerStyle = useMemo(
-    () => resolveHeaderStyle(template, assetAuthKey),
-    [assetAuthKey, template],
+    () => resolveHeaderStyle(template, headerImageFailed, assetAuthKey),
+    [assetAuthKey, headerImageFailed, template],
   );
   const [sampledTone, setSampledTone] = useState<HeaderTitleTone>("black");
 
   useEffect(() => {
     let active = true;
 
-    if (headerStyle.mode !== "image" || !headerStyle.imageUrlForSampling || headerStyle.contrastHex) {
+    if (
+      headerImageFailed ||
+      headerStyle.mode !== "image" ||
+      !headerStyle.imageUrlForSampling ||
+      headerStyle.contrastHex
+    ) {
       return () => {
         active = false;
       };
@@ -200,7 +212,7 @@ export default function InvoiceHeader({
     return () => {
       active = false;
     };
-  }, [headerStyle.contrastHex, headerStyle.imageUrlForSampling, headerStyle.mode]);
+  }, [headerImageFailed, headerStyle.contrastHex, headerStyle.imageUrlForSampling, headerStyle.mode]);
 
   const titleTone: HeaderTitleTone = useMemo(() => {
     if (headerStyle.mode === "plain") return "black";
@@ -217,9 +229,14 @@ export default function InvoiceHeader({
     <section className={styles.header} style={headerStyle.style}>
       <div>
         {template.showBusinessLogo ? (
-          logo.kind === "resolved" && logo.requestUrl ? (
-            <img src={logo.requestUrl} alt="Business logo" className={styles.headerLogo} />
-          ) : logo.kind === "unsynced" ? (
+          logo.kind === "resolved" && logo.requestUrl && !logoFailed ? (
+            <img
+              src={logo.requestUrl}
+              alt="Business logo"
+              className={styles.headerLogo}
+              onError={markLogoFailed}
+            />
+          ) : logoFailed || logo.kind === "unsynced" ? (
             <div className={styles.unsyncedAssetTag}>Logo not synced</div>
           ) : null
         ) : null}
@@ -229,7 +246,7 @@ export default function InvoiceHeader({
           {translations.title}
         </h1>
       ) : null}
-      {template.headerBackground.type === "IMAGE" && headerImage.kind === "unsynced" ? (
+      {template.headerBackground.type === "IMAGE" && (headerImageFailed || headerImage.kind === "unsynced") ? (
         <span className={styles.unsyncedAssetHeaderNotice}>Header image not synced</span>
       ) : null}
     </section>

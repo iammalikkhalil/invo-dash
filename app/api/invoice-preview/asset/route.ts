@@ -9,7 +9,7 @@ function isAllowedAssetUrl(url: URL): boolean {
     return false;
   }
 
-  if (!url.pathname.startsWith("/uploads/")) {
+  if (!url.pathname.startsWith("/uploads/") && !url.pathname.startsWith("/drawable/")) {
     return false;
   }
 

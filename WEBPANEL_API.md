@@ -53,7 +53,7 @@ Response (`data`: `AuthResponse`)
 
 GET `/v1/webpanel/getAllUsersWithStats`
 
-Use this endpoint for the users list screen.
+Use this endpoint for the webpanel users screen.
 
 Response (`data`: `WebpanelUserWithStatsResponse[]`)
 ```json
@@ -73,18 +73,8 @@ Response (`data`: `WebpanelUserWithStatsResponse[]`)
       "createdAt": "2026-02-01T10:15:30",
       "stats": {
         "lastLoginAt": "2026-03-01T09:00:00",
-        "allTime": {
-          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
-          "counts": { "invoices": 50, "payments": 20, "expenses": 18 },
-          "totals": { "invoiceTotalAmount": 12000.5, "paymentTotalAmount": 8000, "expenseTotalAmount": 900.25 },
-          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
-        },
-        "last30Days": {
-          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
-          "counts": { "invoices": 10, "payments": 4, "expenses": 3 },
-          "totals": { "invoiceTotalAmount": 2500, "paymentTotalAmount": 1200, "expenseTotalAmount": 110 },
-          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
-        }
+        "allTime": { "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" }, "counts": { "invoices": 50 }, "totals": { "invoiceTotalAmount": 12000.50, "paymentTotalAmount": 8000.00, "expenseTotalAmount": 900.25 }, "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" } },
+        "last30Days": { "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" }, "counts": { "invoices": 10 }, "totals": { "invoiceTotalAmount": 2500.00, "paymentTotalAmount": 1200.00, "expenseTotalAmount": 110.00 }, "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" } }
       }
     }
   ]
@@ -93,7 +83,172 @@ Response (`data`: `WebpanelUserWithStatsResponse[]`)
 
 ---
 
-## 3) User stats (single user, all-time + last 30 days)
+## 3) Get all users with stats and analytics
+
+GET `/v1/webpanel/getAllUsersWithStatAndAnalytics`
+
+Use this endpoint for the webpanel users screen when you need the existing stats plus Analytics V2 information.
+
+### Analytics source
+
+This endpoint enriches each user with data derived from the Analytics V2 pipeline:
+- `analytics_sessions_v2`
+- `analytics_events`
+- `analytics_user_properties`
+
+### What is included
+
+For each user, the response contains:
+- the same base user fields as `/getAllUsersWithStats`
+- the same `stats` block as `/getAllUsersWithStats`
+- a new `analytics` block with:
+  - overall analytics totals
+  - `locations[]`
+  - `devices[]`
+  - `appVersions[]`
+  - `events[]`
+  - `userProperties[]`
+
+### Notes
+
+- This is Analytics V2 focused.
+- Session-derived information comes from `analytics_sessions_v2`.
+- Event-derived information comes from `analytics_events` as written by the V2 tracking flow.
+- User-property information comes from `analytics_user_properties` as written by the V2 tracking flow.
+- `locations` currently use the fields available in the V2 session model: `country` and `city`.
+- Values are de-duplicated within each analytics group, while counts and timestamps still reflect all matching records.
+
+Response (`data`: `WebpanelUserWithStatsAndAnalyticsResponse[]`)
+```json
+{
+  "success": true,
+  "message": "Users with stats and analytics fetched successfully",
+  "data": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "user@example.com",
+      "username": "john",
+      "phoneNumber": "+15555555555",
+      "profilePictureUrl": "https://...",
+      "role": "USER",
+      "isEmailVerified": true,
+      "isActive": true,
+      "createdAt": "2026-02-01T10:15:30",
+      "stats": {
+        "lastLoginAt": "2026-03-01T09:00:00",
+        "allTime": {
+          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
+          "counts": { "invoices": 50 },
+          "totals": {
+            "invoiceTotalAmount": 12000.50,
+            "paymentTotalAmount": 8000.00,
+            "expenseTotalAmount": 900.25
+          },
+          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
+        },
+        "last30Days": {
+          "activity": { "overallLastActivityAt": "2026-03-01T09:00:00" },
+          "counts": { "invoices": 10 },
+          "totals": {
+            "invoiceTotalAmount": 2500.00,
+            "paymentTotalAmount": 1200.00,
+            "expenseTotalAmount": 110.00
+          },
+          "lastUpdatedAt": { "invoices": "2026-03-01T08:00:00" }
+        }
+      },
+      "analytics": {
+        "totalSessions": 18,
+        "totalEvents": 245,
+        "totalUserProperties": 6,
+        "totalDistinctDevices": 2,
+        "totalDistinctLocations": 2,
+        "totalDistinctAppVersions": 3,
+        "firstSeenAt": "2026-02-10T06:30:00Z",
+        "lastSeenAt": "2026-04-03T11:45:00Z",
+        "locations": [
+          {
+            "country": "Pakistan",
+            "city": "Karachi",
+            "sessionCount": 11,
+            "firstSeenAt": "2026-02-10T06:30:00Z",
+            "lastSeenAt": "2026-04-03T11:45:00Z",
+            "deviceIds": ["device-android-001"],
+            "appVersions": ["2.4.0", "2.5.0"],
+            "platforms": ["ANDROID"]
+          }
+        ],
+        "devices": [
+          {
+            "deviceId": "device-android-001",
+            "appInstanceIds": ["app-inst-1"],
+            "deviceModels": ["Pixel 7"],
+            "manufacturers": ["Google"],
+            "deviceClasses": ["phone"],
+            "platforms": ["ANDROID"],
+            "osVersions": ["14"],
+            "appVersions": ["2.4.0", "2.5.0"],
+            "languages": ["en-US"],
+            "countries": ["Pakistan"],
+            "cities": ["Karachi"],
+            "networkTypes": ["wifi", "mobile"],
+            "screenSizes": ["1080x2400"],
+            "sessionCount": 11,
+            "firstSeenAt": "2026-02-10T06:30:00Z",
+            "lastSeenAt": "2026-04-03T11:45:00Z"
+          }
+        ],
+        "appVersions": [
+          {
+            "appVersion": "2.5.0",
+            "sessionCount": 7,
+            "firstSeenAt": "2026-03-20T08:00:00Z",
+            "lastSeenAt": "2026-04-03T11:45:00Z",
+            "deviceIds": ["device-android-001"],
+            "deviceModels": ["Pixel 7"],
+            "manufacturers": ["Google"],
+            "deviceClasses": ["phone"],
+            "platforms": ["ANDROID"],
+            "osVersions": ["14"],
+            "countries": ["Pakistan"],
+            "cities": ["Karachi"],
+            "appInstanceIds": ["app-inst-1"]
+          }
+        ],
+        "events": [
+          {
+            "eventName": "invoice_created",
+            "count": 42,
+            "firstSeenAt": "2026-02-10T07:00:00Z",
+            "lastSeenAt": "2026-04-03T11:40:00Z",
+            "screenNames": ["CreateInvoiceScreen"],
+            "screenClasses": ["CreateInvoiceActivity"],
+            "previousScreens": ["DashboardScreen"],
+            "itemIds": [],
+            "itemNames": [],
+            "sessionIds": ["9bc8b282-b3b4-4aa1-bf2c-4dbbe537e5d1"],
+            "appInstanceIds": ["app-inst-1"]
+          }
+        ],
+        "userProperties": [
+          {
+            "propertyName": "subscription_plan",
+            "values": ["pro"],
+            "appInstanceIds": ["app-inst-1"],
+            "count": 1,
+            "firstSetAt": "2026-02-10T06:31:00Z",
+            "lastSetAt": "2026-02-10T06:31:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 4) User stats (all-time + last 30 days)
 
 GET `/v1/webpanel/statsByUserId?userId=<UUID>`
 
@@ -186,7 +341,7 @@ Response (`data`: `WebpanelUserStatsResponse`)
 
 ---
 
-## 4) List invoices (admin)
+## 5) List invoices (admin)
 
 GET `/v1/webpanel/invoices`
 
@@ -224,7 +379,7 @@ Response (`data`: `WebpanelInvoiceSummaryResponse[]`)
 
 ---
 
-## 5) Get a single invoice (all data to render)
+## 6) Get a single invoice (all data to render)
 
 GET `/v1/webpanel/invoices/{invoiceId}`
 

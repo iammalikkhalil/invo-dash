@@ -137,7 +137,7 @@ export function mapWebpanelInvoiceToPreviewDocument(
 ): InvoicePreviewDocument {
   const invoice = data.invoice;
   const client = data.client;
-  const currencyCode = invoice.currency || client.currencyCode || "USD";
+  const currencyCode = client.currencyCode || invoice.currency || "USD";
 
   const subtotal = toNumber(invoice.subtotal);
   const discountAmount = toNumber(invoice.discountAmount);

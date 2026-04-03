@@ -115,6 +115,99 @@ export interface WebpanelUserWithStatsResponse {
   stats: WebpanelUserStatsSummary;
 }
 
+export interface WebpanelUserAnalyticsLocation {
+  country: string | null;
+  city: string | null;
+  sessionCount: number;
+  firstSeenAt: LocalDateTime | null;
+  lastSeenAt: LocalDateTime | null;
+  deviceIds: string[];
+  appVersions: string[];
+  platforms: string[];
+}
+
+export interface WebpanelUserAnalyticsDevice {
+  deviceId: string | null;
+  appInstanceIds: string[];
+  deviceModels: string[];
+  manufacturers: string[];
+  deviceClasses: string[];
+  platforms: string[];
+  osVersions: string[];
+  appVersions: string[];
+  languages: string[];
+  countries: string[];
+  cities: string[];
+  networkTypes: string[];
+  screenSizes: string[];
+  sessionCount: number;
+  firstSeenAt: LocalDateTime | null;
+  lastSeenAt: LocalDateTime | null;
+}
+
+export interface WebpanelUserAnalyticsAppVersion {
+  appVersion: string | null;
+  sessionCount: number;
+  firstSeenAt: LocalDateTime | null;
+  lastSeenAt: LocalDateTime | null;
+  deviceIds: string[];
+  deviceModels: string[];
+  manufacturers: string[];
+  deviceClasses: string[];
+  platforms: string[];
+  osVersions: string[];
+  countries: string[];
+  cities: string[];
+  appInstanceIds: string[];
+}
+
+export interface WebpanelUserAnalyticsEvent {
+  eventName: string | null;
+  count: number;
+  firstSeenAt: LocalDateTime | null;
+  lastSeenAt: LocalDateTime | null;
+  screenNames: string[];
+  screenClasses: string[];
+  previousScreens: string[];
+  itemIds: string[];
+  itemNames: string[];
+  sessionIds: string[];
+  appInstanceIds: string[];
+}
+
+export interface WebpanelUserAnalyticsProperty {
+  propertyName: string | null;
+  values: string[];
+  appInstanceIds: string[];
+  count: number;
+  firstSetAt: LocalDateTime | null;
+  lastSetAt: LocalDateTime | null;
+}
+
+export interface WebpanelUserAnalyticsSummary {
+  totalSessions: number;
+  totalEvents: number;
+  totalUserProperties: number;
+  totalDistinctDevices: number;
+  totalDistinctLocations: number;
+  totalDistinctAppVersions: number;
+  firstSeenAt: LocalDateTime | null;
+  lastSeenAt: LocalDateTime | null;
+  locations: WebpanelUserAnalyticsLocation[];
+  devices: WebpanelUserAnalyticsDevice[];
+  appVersions: WebpanelUserAnalyticsAppVersion[];
+  events: WebpanelUserAnalyticsEvent[];
+  userProperties: WebpanelUserAnalyticsProperty[];
+}
+
+export interface WebpanelUserWithStatsAndAnalyticsResponse extends WebpanelUserWithStatsResponse {
+  analytics: WebpanelUserAnalyticsSummary | null;
+}
+
+export interface WebpanelTestingDeviceResponse {
+  deviceId: string;
+}
+
 export interface WebpanelUserResponse {
   id: UUID;
   email: string;

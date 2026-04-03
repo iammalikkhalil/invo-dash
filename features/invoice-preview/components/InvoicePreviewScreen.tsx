@@ -22,6 +22,7 @@ const ITEMS_WRAP_BORDER = 2;
 const ITEMS_ONLY_BOTTOM_GAP = 56;
 const LAYOUT_EPSILON = 0.5;
 const PDF_LAYOUT_SCALE = 4 / 3;
+const MIN_ITEM_ROWS = 9;
 
 interface TableMeasurements {
   headerHeight: number;
@@ -438,7 +439,7 @@ export default function InvoicePreviewScreen({
             showTermsBottom={isLastPage}
             showOverlays={isLastPage}
             assetAuthKey={assetAuthKey}
-            minRows={0}
+            minRows={MIN_ITEM_ROWS}
           />
         );
       }),
@@ -490,7 +491,7 @@ export default function InvoicePreviewScreen({
           currency={data.currency}
           template={data.template}
           translations={data.translations}
-          minRows={0}
+          minRows={MIN_ITEM_ROWS}
           serialStart={1}
         />
       </div>
@@ -507,7 +508,7 @@ export default function InvoicePreviewScreen({
             showTermsBottom={hasTerms}
             showOverlays={false}
             assetAuthKey={assetAuthKey}
-            minRows={0}
+            minRows={MIN_ITEM_ROWS}
           />
         </div>
         <div data-calibration-kind="first">
@@ -521,7 +522,7 @@ export default function InvoicePreviewScreen({
             showTermsBottom={false}
             showOverlays={false}
             assetAuthKey={assetAuthKey}
-            minRows={0}
+            minRows={MIN_ITEM_ROWS}
           />
         </div>
         <div data-calibration-kind="middle">
@@ -535,7 +536,7 @@ export default function InvoicePreviewScreen({
             showTermsBottom={false}
             showOverlays={false}
             assetAuthKey={assetAuthKey}
-            minRows={0}
+            minRows={MIN_ITEM_ROWS}
           />
         </div>
         <div data-calibration-kind="last">
@@ -549,7 +550,7 @@ export default function InvoicePreviewScreen({
             showTermsBottom={hasTerms}
             showOverlays={false}
             assetAuthKey={assetAuthKey}
-            minRows={0}
+            minRows={MIN_ITEM_ROWS}
           />
         </div>
       </div>

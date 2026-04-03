@@ -8,21 +8,34 @@ export interface InvoiceAssetResolution {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const LOCAL_ASSET_HOSTS = new Set<string>(["localhost", "127.0.0.1"]);
+const ASSET_PATH_PREFIXES = ["/uploads/", "/drawable/"] as const;
 
-function toUploadsPath(pathname: string): string | null {
-  if (!pathname.startsWith("/uploads/")) return null;
-  return pathname;
+function toKnownAssetPath(pathname: string): string | null {
+  const match = ASSET_PATH_PREFIXES.find((prefix) => pathname.startsWith(prefix));
+  return match ? pathname : null;
 }
 
-function normalizeUploadsFromBase(path: string): string | null {
+function normalizeAssetFromBase(path: string): string | null {
   if (!API_BASE_URL) return null;
   const trimmed = path.trim();
   const normalizedPath = trimmed.startsWith("/")
     ? trimmed
     : `/${trimmed}`;
 
-  if (!normalizedPath.startsWith("/uploads/")) return null;
+  if (!toKnownAssetPath(normalizedPath)) return null;
   return `${API_BASE_URL}${normalizedPath}`;
+}
+
+function isRewritableAssetHost(hostname: string): boolean {
+  if (LOCAL_ASSET_HOSTS.has(hostname)) return true;
+
+  if (!API_BASE_URL) return false;
+  try {
+    return new URL(API_BASE_URL).hostname === hostname;
+  } catch {
+    return false;
+  }
 }
 
 export function normalizeInvoiceAssetUrl(input: string | null | undefined): InvoiceAssetResolution {
@@ -32,12 +45,14 @@ export function normalizeInvoiceAssetUrl(input: string | null | undefined): Invo
   }
 
   const normalizedRaw = rawValue.replace(/\\/g, "/");
-  if (normalizedRaw.toLowerCase().startsWith("drawable/")) {
-    return { kind: "unsynced", rawValue, normalizedUrl: null, requestUrl: null };
-  }
 
-  if (normalizedRaw.startsWith("/uploads/") || normalizedRaw.startsWith("uploads/")) {
-    const rewritten = normalizeUploadsFromBase(normalizedRaw);
+  if (
+    normalizedRaw.startsWith("/uploads/") ||
+    normalizedRaw.startsWith("uploads/") ||
+    normalizedRaw.startsWith("/drawable/") ||
+    normalizedRaw.startsWith("drawable/")
+  ) {
+    const rewritten = normalizeAssetFromBase(normalizedRaw);
     if (!rewritten) {
       return { kind: "missing", rawValue, normalizedUrl: null, requestUrl: null };
     }
@@ -46,13 +61,13 @@ export function normalizeInvoiceAssetUrl(input: string | null | undefined): Invo
 
   try {
     const parsed = new URL(normalizedRaw);
-    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
-      const uploadsPath = toUploadsPath(parsed.pathname);
-      if (!uploadsPath) {
+    if (isRewritableAssetHost(parsed.hostname)) {
+      const assetPath = toKnownAssetPath(parsed.pathname);
+      if (!assetPath) {
         return { kind: "missing", rawValue, normalizedUrl: null, requestUrl: null };
       }
 
-      const rewritten = normalizeUploadsFromBase(`${uploadsPath}${parsed.search}`);
+      const rewritten = normalizeAssetFromBase(`${assetPath}${parsed.search}`);
       if (!rewritten) {
         return { kind: "missing", rawValue, normalizedUrl: null, requestUrl: null };
       }

@@ -6,11 +6,14 @@ import type {
   WebpanelInventoryItemResponse,
   WebpanelInvoiceFullResponse,
   WebpanelInvoiceSummaryResponse,
+  WebpanelTestingDeviceResponse,
+  WebpanelUserWithStatsAndAnalyticsResponse,
   WebpanelUserWithStatsResponse,
   WebpanelUserStatsResponse,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const IS_NGROK_BASE_URL = /https?:\/\/[^/]*ngrok[^/]*/i.test(API_BASE_URL);
 
 export class ApiError extends Error {
   status: number;
@@ -54,6 +57,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const requiresAuth = options.requiresAuth ?? true;
 
   headers.set("Content-Type", "application/json");
+  if (IS_NGROK_BASE_URL) {
+    headers.set("ngrok-skip-browser-warning", "true");
+  }
 
   if (requiresAuth) {
     const token = getAccessToken();
@@ -132,6 +138,16 @@ export const api = {
 
   getAllUsersWithStats() {
     return apiRequest<WebpanelUserWithStatsResponse[]>("/v1/webpanel/getAllUsersWithStats");
+  },
+
+  getAllUsersWithStatAndAnalytics() {
+    return apiRequest<WebpanelUserWithStatsAndAnalyticsResponse[]>(
+      "/v1/webpanel/getAllUsersWithStatAndAnalytics",
+    );
+  },
+
+  getTestingDevices() {
+    return apiRequest<WebpanelTestingDeviceResponse[]>("/v1/webpanel/testing-devices");
   },
 
   async getUserStats(userId: string) {

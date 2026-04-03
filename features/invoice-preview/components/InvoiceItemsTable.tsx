@@ -71,6 +71,95 @@ function formatAmount(value: number, currency: InvoicePreviewCurrency): string {
   }
 }
 
+function formatPlainDecimal(value: number): string {
+  return value.toFixed(2);
+}
+
+function roundTo(value: number, decimals: number): number {
+  const safeDecimals = Number.isFinite(decimals) ? Math.max(0, decimals) : 2;
+  const factor = 10 ** safeDecimals;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
+}
+
+function toFiniteNumber(value: number | string | null | undefined, fallback = 0): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
+}
+
+function calculateLineAmount(
+  item: InvoicePreviewLineItem,
+  currency: InvoicePreviewCurrency,
+): number {
+  const quantity = toFiniteNumber(item.quantity);
+  const unitPrice = toFiniteNumber(item.unitPrice);
+  const rawDiscount = toFiniteNumber(item.discountValue);
+  let unitDiscountAmount = 0;
+  if (rawDiscount > 0) {
+    unitDiscountAmount =
+      item.discountType === "PERCENTAGE"
+        ? (unitPrice * rawDiscount) / 100
+        : rawDiscount;
+  }
+
+  const discountedUnitPrice = Math.max(0, unitPrice - unitDiscountAmount);
+  const rawTaxRate = item.tax?.rate as number | string | null | undefined;
+  const taxRate = toFiniteNumber(rawTaxRate);
+  const taxPerUnit = (discountedUnitPrice * taxRate) / 100;
+  const finalPerUnit = discountedUnitPrice + taxPerUnit;
+  const lineAmount = roundTo(finalPerUnit * quantity, currency.decimals);
+
+  return lineAmount;
+}
+
+function formatDiscountDisplay(
+  item: InvoicePreviewLineItem | null,
+  currency: InvoicePreviewCurrency,
+): string {
+  if (!item) return "";
+
+  const discountValue = toFiniteNumber(item.discountValue);
+  if (discountValue <= 0) {
+    return "0.00";
+  }
+
+  if (item.discountType === "PERCENTAGE") {
+    return `${formatPlainDecimal(discountValue)}%`;
+  }
+
+  if (item.discountType === "FLAT") {
+    return formatAmount(discountValue, currency);
+  }
+
+  return formatPlainDecimal(discountValue);
+}
+
+function formatTaxDisplay(item: InvoicePreviewLineItem | null): string {
+  if (!item) return "";
+
+  const taxRate = toFiniteNumber(item.tax?.rate);
+  return `${formatPlainDecimal(taxRate)}%`;
+}
+
+function renderCellValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") {
+    return "\u00A0";
+  }
+
+  return String(value);
+}
+
+function CellText({ value }: { value: string | number | null | undefined }) {
+  return <span className={styles.itemsCellText}>{renderCellValue(value)}</span>;
+}
+
 export default function InvoiceItemsTable({
   items,
   currency,
@@ -129,23 +218,31 @@ export default function InvoiceItemsTable({
         <tbody>
           {displayRows.map((item, index) => (
             <tr key={item?.id || `blank-${index}`}>
-              <td style={{ textAlign: bodyAlign }}>{serialStart + index}</td>
               <td style={{ textAlign: bodyAlign }}>
-                {item ? `${item.name}${item.description ? ` - ${item.description}` : ""}` : ""}
-              </td>
-              <td style={{ textAlign: bodyAlign }}>{item ? item.quantity.toFixed(2) : ""}</td>
-              <td style={{ textAlign: bodyAlign }}>
-                {item ? formatAmount(item.unitPrice, currency) : ""}
+                <CellText value={item ? serialStart + index : ""} />
               </td>
               <td style={{ textAlign: bodyAlign }}>
-                {item?.discountValue
-                  ? item.discountType === "PERCENTAGE"
-                    ? `${item.discountValue}%`
-                    : formatAmount(item.discountValue, currency)
-                  : ""}
+                <CellText
+                  value={item ? `${item.name}${item.description ? ` - ${item.description}` : ""}` : ""}
+                />
               </td>
-              <td style={{ textAlign: bodyAlign }}>{item?.tax ? `${item.tax.rate}%` : ""}</td>
-              <td style={{ textAlign: amountAlign }}>{item ? formatAmount(item.netPrice, currency) : ""}</td>
+              <td style={{ textAlign: bodyAlign }}>
+                <CellText value={item ? item.quantity.toFixed(2) : ""} />
+              </td>
+              <td style={{ textAlign: bodyAlign }}>
+                <CellText value={item ? formatAmount(item.unitPrice, currency) : ""} />
+              </td>
+              <td style={{ textAlign: bodyAlign }}>
+                <CellText value={formatDiscountDisplay(item, currency)} />
+              </td>
+              <td style={{ textAlign: bodyAlign }}>
+                <CellText value={formatTaxDisplay(item)} />
+              </td>
+              <td style={{ textAlign: amountAlign }}>
+                <CellText
+                  value={item ? formatAmount(calculateLineAmount(item, currency), currency) : ""}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
