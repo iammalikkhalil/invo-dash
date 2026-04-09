@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import type {
+  BusinessResponse,
   BackgroundResponse,
   HeaderResponse,
   SignatureResponse,
@@ -14,9 +15,11 @@ import {
   formatDate,
   formatDateTime,
 } from "@/lib/format";
+import { resolveInvoiceAsset } from "@/lib/invoice-preview-assets";
 
 interface InvoiceViewProps {
   data: WebpanelInvoiceFullResponse;
+  assetAuthKey?: string | null;
 }
 
 interface KeyValueField {
@@ -24,10 +27,32 @@ interface KeyValueField {
   value: ReactNode;
 }
 
-function readAssetUrl(
+interface ResolvedAssetUrls {
+  normalizedUrl: string | null;
+  requestUrl: string | null;
+}
+
+function readBusinessLogoUrls(
+  business: BusinessResponse,
+  assetAuthKey?: string | null,
+): ResolvedAssetUrls {
+  const resolved = resolveInvoiceAsset(business.logo, assetAuthKey);
+  return {
+    normalizedUrl: resolved.normalizedUrl,
+    requestUrl: resolved.requestUrl,
+  };
+}
+
+function readAssetUrls(
   asset: HeaderResponse | BackgroundResponse | SignatureResponse | StampResponse | null,
-): string | null {
-  return asset?.image ? String(asset.image) : null;
+  assetAuthKey?: string | null,
+): ResolvedAssetUrls {
+  const raw = asset?.image ? String(asset.image) : null;
+  const resolved = resolveInvoiceAsset(raw, assetAuthKey);
+  return {
+    normalizedUrl: resolved.normalizedUrl,
+    requestUrl: resolved.requestUrl,
+  };
 }
 
 function formatBoolean(value: boolean | null | undefined): string {
@@ -202,15 +227,16 @@ function StatusBadge({ status }: { status: string | null | undefined }) {
   );
 }
 
-export default function InvoiceView({ data }: InvoiceViewProps) {
-  const { invoice, client } = data;
+export default function InvoiceView({ data, assetAuthKey = null }: InvoiceViewProps) {
+  const { invoice, business, client } = data;
   const currency = invoice.currency || "USD";
 
-  const signatureUrl = readAssetUrl(data.signature);
-  const stampUrl = readAssetUrl(data.stamp);
-  const headerUrl = readAssetUrl(data.header);
-  const backgroundUrl = readAssetUrl(data.background);
-  const templateImageUrl = data.template?.templateImage || null;
+  const businessLogoAsset = readBusinessLogoUrls(business, assetAuthKey);
+  const signatureAsset = readAssetUrls(data.signature, assetAuthKey);
+  const stampAsset = readAssetUrls(data.stamp, assetAuthKey);
+  const headerAsset = readAssetUrls(data.header, assetAuthKey);
+  const backgroundAsset = readAssetUrls(data.background, assetAuthKey);
+  const templateImageAsset = resolveInvoiceAsset(data.template?.templateImage || null, assetAuthKey);
   const paymentInstructionJson = parseFieldsJson(data.paymentInstruction?.fieldsJson);
 
   return (
@@ -284,6 +310,19 @@ export default function InvoiceView({ data }: InvoiceViewProps) {
           text-transform: uppercase;
           color: #94a3b8;
           margin: 0;
+        }
+        .asset-url {
+          font-family: 'DM Mono', monospace;
+          font-size: 10.5px;
+          color: #475569;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          padding: 10px 12px;
+          word-break: break-all;
+          line-height: 1.6;
+          margin: 0;
+          user-select: text;
         }
         .entity-grid {
           display: grid;
@@ -486,6 +525,54 @@ export default function InvoiceView({ data }: InvoiceViewProps) {
             </div>
           </Section>
 
+          <Section title="Business Information">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <Panel title="Identity" accent="linear-gradient(90deg, #0f766e, #14b8a6)">
+                <FieldGrid fields={[
+                  { label: "Business Name", value: fallbackText(business.name) },
+                  { label: "Short Name", value: fallbackText(business.shortName) },
+                  { label: "Business UUID", value: fallbackText(business.id) },
+                  { label: "User UUID", value: fallbackText(business.userId) },
+                  { label: "License Number", value: fallbackText(business.licenseNumber) },
+                  { label: "Business Number", value: fallbackText(business.businessNumber) },
+                ]} />
+              </Panel>
+              <Panel title="Contact & Address" accent="linear-gradient(90deg, #14b8a6, #2dd4bf)">
+                <FieldGrid fields={[
+                  { label: "Email", value: fallbackText(business.emailAddress) },
+                  { label: "Phone", value: fallbackText(business.phone) },
+                  { label: "Website", value: fallbackText(business.website) },
+                  {
+                    label: "Address",
+                    value: [
+                      business.addressLine1,
+                      business.addressLine2,
+                      business.city,
+                      business.state,
+                      business.zipcode,
+                      business.country,
+                    ].filter(Boolean).join(", ") || "â€”",
+                  },
+                ]} />
+              </Panel>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <Panel title="Financial & Metadata" accent="linear-gradient(90deg, #2dd4bf, #99f6e4)">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 32px" }}>
+                  <FieldGrid fields={[
+                    { label: "Currency Code", value: fallbackText(business.currencyCode) },
+                    { label: "Deleted", value: formatBoolean(business.isDeleted) },
+                  ]} />
+                  <FieldGrid fields={[
+                    { label: "Created At", value: formatDateTime(business.createdAt) },
+                    { label: "Updated At", value: formatDateTime(business.updatedAt) },
+                    { label: "Deleted At", value: formatDateTime(business.deletedAt) },
+                  ]} />
+                </div>
+              </Panel>
+            </div>
+          </Section>
+
           <Section title="Line Items">
             <div style={{
               background: "#ffffff", border: "1px solid #e2e8f0",
@@ -675,41 +762,74 @@ export default function InvoiceView({ data }: InvoiceViewProps) {
                 ) : <p className="muted">No stamp record attached.</p>}
               </Panel>
             </div>
-            {(signatureUrl || stampUrl || headerUrl || backgroundUrl || templateImageUrl) ? (
+            {(
+              businessLogoAsset.normalizedUrl ||
+              signatureAsset.normalizedUrl ||
+              stampAsset.normalizedUrl ||
+              headerAsset.normalizedUrl ||
+              backgroundAsset.normalizedUrl ||
+              templateImageAsset.normalizedUrl
+            ) ? (
               <div className="asset-grid">
-                {templateImageUrl && (
+                {businessLogoAsset.requestUrl && businessLogoAsset.normalizedUrl && (
+                  <div className="asset-card">
+                    <p className="asset-label">Business Logo</p>
+                    <Image
+                      src={businessLogoAsset.requestUrl}
+                      alt="Business logo"
+                      width={260}
+                      height={160}
+                      unoptimized
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        borderRadius: "6px",
+                        objectFit: "contain",
+                        background: "#f8fafc",
+                        padding: "8px",
+                      }}
+                    />
+                    <p className="asset-url">{businessLogoAsset.normalizedUrl}</p>
+                  </div>
+                )}
+                {templateImageAsset.requestUrl && templateImageAsset.normalizedUrl && (
                   <div className="asset-card">
                     <p className="asset-label">Template Image</p>
-                    <Image src={templateImageUrl} alt="Template" width={260} height={160} unoptimized
+                    <Image src={templateImageAsset.requestUrl} alt="Template" width={260} height={160} unoptimized
                       style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
+                    <p className="asset-url">{templateImageAsset.normalizedUrl}</p>
                   </div>
                 )}
-                {headerUrl && (
+                {headerAsset.requestUrl && headerAsset.normalizedUrl && (
                   <div className="asset-card">
                     <p className="asset-label">Header Image</p>
-                    <Image src={headerUrl} alt="Header" width={260} height={160} unoptimized
+                    <Image src={headerAsset.requestUrl} alt="Header" width={260} height={160} unoptimized
                       style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
+                    <p className="asset-url">{headerAsset.normalizedUrl}</p>
                   </div>
                 )}
-                {backgroundUrl && (
+                {backgroundAsset.requestUrl && backgroundAsset.normalizedUrl && (
                   <div className="asset-card">
                     <p className="asset-label">Background Image</p>
-                    <Image src={backgroundUrl} alt="Background" width={260} height={160} unoptimized
+                    <Image src={backgroundAsset.requestUrl} alt="Background" width={260} height={160} unoptimized
                       style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
+                    <p className="asset-url">{backgroundAsset.normalizedUrl}</p>
                   </div>
                 )}
-                {signatureUrl && (
+                {signatureAsset.requestUrl && signatureAsset.normalizedUrl && (
                   <div className="asset-card">
                     <p className="asset-label">Signature</p>
-                    <Image src={signatureUrl} alt="Signature" width={260} height={160} unoptimized
+                    <Image src={signatureAsset.requestUrl} alt="Signature" width={260} height={160} unoptimized
                       style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "contain", background: "#f8fafc", padding: "8px" }} />
+                    <p className="asset-url">{signatureAsset.normalizedUrl}</p>
                   </div>
                 )}
-                {stampUrl && (
+                {stampAsset.requestUrl && stampAsset.normalizedUrl && (
                   <div className="asset-card">
                     <p className="asset-label">Stamp</p>
-                    <Image src={stampUrl} alt="Stamp" width={260} height={160} unoptimized
+                    <Image src={stampAsset.requestUrl} alt="Stamp" width={260} height={160} unoptimized
                       style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "contain", background: "#f8fafc", padding: "8px" }} />
+                    <p className="asset-url">{stampAsset.normalizedUrl}</p>
                   </div>
                 )}
               </div>

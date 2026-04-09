@@ -10,7 +10,7 @@ import LoadingState from "@/components/LoadingState";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { api, ApiError, getErrorMessage, isUnauthorizedError } from "@/lib/api";
-import { clearAccessToken, isLoggedIn } from "@/lib/auth";
+import { clearAccessToken, getAccessToken, isLoggedIn } from "@/lib/auth";
 import type { WebpanelInvoiceFullResponse } from "@/lib/types";
 
 export default function InvoiceDetailPage() {
@@ -23,6 +23,7 @@ export default function InvoiceDetailPage() {
   const [data, setData] = useState<WebpanelInvoiceFullResponse | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [assetAuthKey, setAssetAuthKey] = useState<string | null>(null);
 
   const handleUnauthorized = useCallback(() => {
     clearAccessToken({ sessionExpired: true });
@@ -57,9 +58,41 @@ export default function InvoiceDetailPage() {
     }
   }, [handleUnauthorized, invoiceId, router]);
 
+  const loadAssetAuthKey = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) {
+      setAssetAuthKey(null);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/invoice-preview/asset-auth", {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        setAssetAuthKey(null);
+        return;
+      }
+
+      const payload = (await response.json()) as { key?: string };
+      setAssetAuthKey(typeof payload.key === "string" ? payload.key : null);
+    } catch {
+      setAssetAuthKey(null);
+    }
+  }, []);
+
+  const reloadInvoicePage = useCallback(async () => {
+    await Promise.all([loadInvoice(), loadAssetAuthKey()]);
+  }, [loadAssetAuthKey, loadInvoice]);
+
   useEffect(() => {
-    void loadInvoice();
-  }, [loadInvoice]);
+    void reloadInvoicePage();
+  }, [reloadInvoicePage]);
 
   return (
     <main className="app-shell">
@@ -75,9 +108,9 @@ export default function InvoiceDetailPage() {
         </div>
 
         {isLoading ? <LoadingState message="Loading invoice..." /> : null}
-        {!isLoading && error ? <ErrorState message={error} onRetry={loadInvoice} /> : null}
+        {!isLoading && error ? <ErrorState message={error} onRetry={reloadInvoicePage} /> : null}
         {!isLoading && !error && !data ? <EmptyState message="No invoice data available." /> : null}
-        {!isLoading && !error && data ? <InvoiceView data={data} /> : null}
+        {!isLoading && !error && data ? <InvoiceView data={data} assetAuthKey={assetAuthKey} /> : null}
         </section>
       </div>
     </main>

@@ -351,6 +351,30 @@ export interface ClientResponse {
   deletedAt: LocalDateTime | null;
 }
 
+export interface BusinessResponse {
+  id: UUID;
+  userId: UUID | null;
+  name: string;
+  logo: string | null;
+  shortName: string | null;
+  licenseNumber: string | null;
+  businessNumber: string | null;
+  phone: string | null;
+  emailAddress: string | null;
+  website: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: string | null;
+  country: string | null;
+  currencyCode: string | null;
+  isDeleted: boolean;
+  createdAt: LocalDateTime;
+  updatedAt: LocalDateTime;
+  deletedAt: LocalDateTime | null;
+}
+
 export interface TaxResponse {
   id: UUID;
   businessId: UUID;
@@ -467,6 +491,7 @@ export interface StampResponse {
 
 export interface WebpanelInvoiceFullResponse {
   invoice: InvoiceDetailResponse;
+  business: BusinessResponse;
   client: ClientResponse;
   tax: TaxResponse | null;
   terms: TermsResponse | null;

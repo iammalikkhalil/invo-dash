@@ -11,6 +11,11 @@ import type {
   WebpanelUserWithStatsResponse,
   WebpanelUserStatsResponse,
 } from "@/lib/types";
+import type {
+  IpStatsResponse,
+  IpRecordResponse,
+  SuspiciousIpFullResponse,
+} from "@/features/ip-stats/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
 const IS_NGROK_BASE_URL = /https?:\/\/[^/]*ngrok[^/]*/i.test(API_BASE_URL);
@@ -180,5 +185,19 @@ export const api = {
   getInventoryItems(userId?: string) {
     const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
     return apiRequest<WebpanelInventoryItemResponse[]>(`/v1/webpanel/inventory-items${query}`);
+  },
+
+  getIpStats(threshold: number = 10) {
+    return apiRequest<IpStatsResponse>(`/v1/ip/stats?threshold=${threshold}`);
+  },
+
+  getIpRecord(ip: string) {
+    return apiRequest<IpRecordResponse>(`/v1/ip/${encodeURIComponent(ip)}`);
+  },
+
+  getSuspiciousIps(threshold: number = 10) {
+    return apiRequest<SuspiciousIpFullResponse[]>(
+      `/v1/ip/suspicious/full?threshold=${threshold}`,
+    );
   },
 };

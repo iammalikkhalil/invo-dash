@@ -20,6 +20,11 @@ const navItems = [
     href: "/inventory-items",
     isActive: (pathname: string) => pathname.startsWith("/inventory-items"),
   },
+  {
+    label: "Ip Stats",
+    href: "/ip-stats",
+    isActive: (pathname: string) => pathname.startsWith("/ip-stats"),
+  },
 ] as const;
 
 export default function Sidebar() {
