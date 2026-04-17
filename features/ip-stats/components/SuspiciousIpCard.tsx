@@ -92,6 +92,9 @@ export function SuspiciousIpCard({ record }: SuspiciousIpCardProps) {
                                 No user details available
                             </p>
                         ) : (
+
+
+
                             <div
                                 className={styles.usersTableWrapper}
                                 style={{
@@ -130,6 +133,8 @@ export function SuspiciousIpCard({ record }: SuspiciousIpCardProps) {
                                     </tbody>
                                 </table>
                             </div>
+
+
                         )}
                     </div>
                 </div>

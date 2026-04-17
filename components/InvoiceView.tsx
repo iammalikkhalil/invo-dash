@@ -32,6 +32,14 @@ interface ResolvedAssetUrls {
   requestUrl: string | null;
 }
 
+interface AssetCardData {
+  label: string;
+  alt: string;
+  sourceValue: string | null | undefined;
+  asset: ResolvedAssetUrls;
+  imageStyle?: React.CSSProperties;
+}
+
 function readBusinessLogoUrls(
   business: BusinessResponse,
   assetAuthKey?: string | null,
@@ -114,6 +122,42 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
         fontWeight: 400,
         wordBreak: "break-all",
       }}>{value}</span>
+    </div>
+  );
+}
+
+function AssetCard({ label, alt, sourceValue, asset, imageStyle }: AssetCardData) {
+  return (
+    <div className="asset-card">
+      <p className="asset-label">{label}</p>
+      {asset.requestUrl ? (
+        <Image
+          src={asset.requestUrl}
+          alt={alt}
+          width={260}
+          height={160}
+          unoptimized
+          style={{
+            width: "100%",
+            height: "auto",
+            borderRadius: "6px",
+            objectFit: "contain",
+            background: "#f8fafc",
+            padding: "8px",
+            ...imageStyle,
+          }}
+        />
+      ) : (
+        <div className="asset-empty">No image available</div>
+      )}
+      <div className="asset-meta">
+        <p className="asset-meta-label">Source Value</p>
+        <p className="asset-url">{fallbackText(sourceValue)}</p>
+      </div>
+      <div className="asset-meta">
+        <p className="asset-meta-label">Resolved URL</p>
+        <p className="asset-url">{fallbackText(asset.normalizedUrl)}</p>
+      </div>
     </div>
   );
 }
@@ -323,6 +367,34 @@ export default function InvoiceView({ data, assetAuthKey = null }: InvoiceViewPr
           line-height: 1.6;
           margin: 0;
           user-select: text;
+        }
+        .asset-empty {
+          min-height: 160px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          background: #f8fafc;
+          border: 1px dashed #cbd5e1;
+          color: #94a3b8;
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          text-align: center;
+          padding: 16px;
+        }
+        .asset-meta {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .asset-meta-label {
+          font-family: 'DM Mono', monospace;
+          font-size: 9px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #94a3b8;
+          margin: 0;
         }
         .entity-grid {
           display: grid;
@@ -762,80 +834,50 @@ export default function InvoiceView({ data, assetAuthKey = null }: InvoiceViewPr
                 ) : <p className="muted">No stamp record attached.</p>}
               </Panel>
             </div>
-            {(
-              businessLogoAsset.normalizedUrl ||
-              signatureAsset.normalizedUrl ||
-              stampAsset.normalizedUrl ||
-              headerAsset.normalizedUrl ||
-              backgroundAsset.normalizedUrl ||
-              templateImageAsset.normalizedUrl
-            ) ? (
-              <div className="asset-grid">
-                {businessLogoAsset.requestUrl && businessLogoAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Business Logo</p>
-                    <Image
-                      src={businessLogoAsset.requestUrl}
-                      alt="Business logo"
-                      width={260}
-                      height={160}
-                      unoptimized
-                      style={{
-                        width: "100%",
-                        height: "auto",
-                        borderRadius: "6px",
-                        objectFit: "contain",
-                        background: "#f8fafc",
-                        padding: "8px",
-                      }}
-                    />
-                    <p className="asset-url">{businessLogoAsset.normalizedUrl}</p>
-                  </div>
-                )}
-                {templateImageAsset.requestUrl && templateImageAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Template Image</p>
-                    <Image src={templateImageAsset.requestUrl} alt="Template" width={260} height={160} unoptimized
-                      style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
-                    <p className="asset-url">{templateImageAsset.normalizedUrl}</p>
-                  </div>
-                )}
-                {headerAsset.requestUrl && headerAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Header Image</p>
-                    <Image src={headerAsset.requestUrl} alt="Header" width={260} height={160} unoptimized
-                      style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
-                    <p className="asset-url">{headerAsset.normalizedUrl}</p>
-                  </div>
-                )}
-                {backgroundAsset.requestUrl && backgroundAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Background Image</p>
-                    <Image src={backgroundAsset.requestUrl} alt="Background" width={260} height={160} unoptimized
-                      style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "cover" }} />
-                    <p className="asset-url">{backgroundAsset.normalizedUrl}</p>
-                  </div>
-                )}
-                {signatureAsset.requestUrl && signatureAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Signature</p>
-                    <Image src={signatureAsset.requestUrl} alt="Signature" width={260} height={160} unoptimized
-                      style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "contain", background: "#f8fafc", padding: "8px" }} />
-                    <p className="asset-url">{signatureAsset.normalizedUrl}</p>
-                  </div>
-                )}
-                {stampAsset.requestUrl && stampAsset.normalizedUrl && (
-                  <div className="asset-card">
-                    <p className="asset-label">Stamp</p>
-                    <Image src={stampAsset.requestUrl} alt="Stamp" width={260} height={160} unoptimized
-                      style={{ width: "100%", height: "auto", borderRadius: "6px", objectFit: "contain", background: "#f8fafc", padding: "8px" }} />
-                    <p className="asset-url">{stampAsset.normalizedUrl}</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="muted">No design assets available.</p>
-            )}
+            <div className="asset-grid">
+              <AssetCard
+                label="Business Logo"
+                alt="Business logo"
+                sourceValue={business.logo}
+                asset={businessLogoAsset}
+              />
+              <AssetCard
+                label="Template Image"
+                alt="Template"
+                sourceValue={data.template?.templateImage}
+                asset={{
+                  normalizedUrl: templateImageAsset.normalizedUrl,
+                  requestUrl: templateImageAsset.requestUrl,
+                }}
+                imageStyle={{ objectFit: "cover", padding: "0" }}
+              />
+              <AssetCard
+                label="Header Image"
+                alt="Header"
+                sourceValue={data.header?.image}
+                asset={headerAsset}
+                imageStyle={{ objectFit: "cover", padding: "0" }}
+              />
+              <AssetCard
+                label="Background Image"
+                alt="Background"
+                sourceValue={data.background?.image}
+                asset={backgroundAsset}
+                imageStyle={{ objectFit: "cover", padding: "0" }}
+              />
+              <AssetCard
+                label="Signature"
+                alt="Signature"
+                sourceValue={data.signature?.image}
+                asset={signatureAsset}
+              />
+              <AssetCard
+                label="Stamp"
+                alt="Stamp"
+                sourceValue={data.stamp?.image}
+                asset={stampAsset}
+              />
+            </div>
           </Section>
 
           <Section title="System References & Audit">
