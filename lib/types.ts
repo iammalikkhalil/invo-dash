@@ -208,6 +208,11 @@ export interface WebpanelTestingDeviceResponse {
   deviceId: string;
 }
 
+export interface WebpanelTestingDeviceLookupResponse {
+  deviceId: string;
+  isTestingDevice: boolean;
+}
+
 export interface WebpanelUserResponse {
   id: UUID;
   email: string;

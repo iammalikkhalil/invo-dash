@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../styles/ip-stats.module.css";
-import { countryCodeToFlag, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
 import type { SuspiciousIpFullResponse } from "../types";
 
 interface SuspiciousIpCardProps {
@@ -24,7 +24,11 @@ export function SuspiciousIpCard({ record }: SuspiciousIpCardProps) {
     const router = useRouter();
 
     const details = record.ipDetails;
-    const flag = countryCodeToFlag(details?.countryCode ?? null);
+    const countryCode = details?.countryCode?.trim().toUpperCase() || null;
+    const flagUrl =
+        countryCode && /^[A-Z]{2}$/.test(countryCode)
+            ? `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+            : null;
 
     return (
         <div className={styles.suspiciousCard}>
@@ -39,9 +43,21 @@ export function SuspiciousIpCard({ record }: SuspiciousIpCardProps) {
                     {record.userCount} users
                 </span>
 
-                {details?.country && (
-                    <span className={styles.countryText}>
-                        {flag} {details.country}
+                {countryCode && (
+                    <span className={styles.countryBadge} title={details?.country || countryCode}>
+                        {flagUrl ? (
+                            <img
+                                src={flagUrl}
+                                alt=""
+                                className={styles.countryBadgeFlag}
+                                loading="lazy"
+                                width={18}
+                                height={14}
+                            />
+                        ) : (
+                            <span className={styles.countryBadgeFlagFallback} aria-hidden="true">-</span>
+                        )}
+                        <span className={styles.countryBadgeCode}>{countryCode}</span>
                     </span>
                 )}
 

@@ -4,6 +4,7 @@ interface UserCardProps {
   row: {
     email: string;
     role: string;
+    country: string | null;
     invoicesAll: number;
     invoices30: number;
     overdue: number;
@@ -32,12 +33,39 @@ function compactEmail(email: string, maxLength = 24): string {
 }
 
 export default function UserCard({ row, onClick }: UserCardProps) {
+  const countryCode = row.country?.trim().toUpperCase() || null;
+  const flagUrl =
+    countryCode && /^[A-Z]{2}$/.test(countryCode)
+      ? `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+      : null;
+
   return (
     <button type="button" className="users-table-row" onClick={onClick}>
       <span className="users-cell users-cell-email" title={row.email}>
         {compactEmail(row.email)}
       </span>
       <span className="users-cell">{row.role}</span>
+      <span className="users-cell">
+        {row.country ? (
+          <span className="country-badge" title={countryCode}>
+            {flagUrl ? (
+              <img
+                src={flagUrl}
+                alt=""
+                className="country-badge-flag-image"
+                loading="lazy"
+                width={18}
+                height={14}
+              />
+            ) : (
+              <span className="country-badge-flag-fallback" aria-hidden="true">-</span>
+            )}
+            <span className="country-badge-code">{countryCode}</span>
+          </span>
+        ) : (
+          "-"
+        )}
+      </span>
       <span className="users-cell users-cell-number">{row.invoicesAll}</span>
       <span className="users-cell users-cell-number">{row.invoices30}</span>
       <span className="users-cell users-cell-number">{row.overdue}</span>

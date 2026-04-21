@@ -6,6 +6,7 @@ import type {
   WebpanelInventoryItemResponse,
   WebpanelInvoiceFullResponse,
   WebpanelInvoiceSummaryResponse,
+  WebpanelTestingDeviceLookupResponse,
   WebpanelTestingDeviceResponse,
   WebpanelUserWithStatsAndAnalyticsResponse,
   WebpanelUserWithStatsResponse,
@@ -57,7 +58,7 @@ interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
 }
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function requestWithAuth(path: string, options: RequestOptions = {}): Promise<Response> {
   const headers = new Headers(options.headers ?? {});
   const requiresAuth = options.requiresAuth ?? true;
 
@@ -76,10 +77,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  let response: Response;
-
   try {
-    response = await fetch(buildUrl(path), {
+    return await fetch(buildUrl(path), {
       ...options,
       headers,
     });
@@ -90,6 +89,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       isNetworkError: true,
     });
   }
+}
+
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await requestWithAuth(path, options);
 
   const body = await parseResponseBody<T>(response);
 
@@ -114,6 +117,34 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   return body.data as T;
+}
+
+export async function apiRequestRaw<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await requestWithAuth(path, options);
+  const rawBody = (await response.json().catch(() => null)) as
+    | T
+    | { message?: string; data?: unknown }
+    | null;
+
+  if (!response.ok) {
+    const message =
+      rawBody && typeof rawBody === "object" && "message" in rawBody && typeof rawBody.message === "string"
+        ? rawBody.message
+        : `Request failed with status ${response.status}`;
+
+    throw new ApiError(message, {
+      status: response.status,
+      data: rawBody && typeof rawBody === "object" && "data" in rawBody ? rawBody.data : rawBody,
+    });
+  }
+
+  if (rawBody === null) {
+    throw new ApiError("Invalid server response.", {
+      status: response.status,
+    });
+  }
+
+  return rawBody as T;
 }
 
 export function getErrorMessage(error: unknown, fallback = "Something went wrong."): string {
@@ -153,6 +184,60 @@ export const api = {
 
   getTestingDevices() {
     return apiRequest<WebpanelTestingDeviceResponse[]>("/v1/webpanel/testing-devices");
+  },
+
+  createTestingDevice(deviceId: string) {
+    return apiRequest<WebpanelTestingDeviceResponse>("/v1/webpanel/testing-devices", {
+      method: "POST",
+      body: JSON.stringify({ deviceId }),
+    });
+  },
+
+  updateTestingDevice(currentDeviceId: string, nextDeviceId: string) {
+    return apiRequest<WebpanelTestingDeviceResponse>(
+      `/v1/webpanel/testing-devices/${encodeURIComponent(currentDeviceId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ deviceId: nextDeviceId }),
+      },
+    );
+  },
+
+  deleteTestingDevice(deviceId: string) {
+    return apiRequest<null>(`/v1/webpanel/testing-devices/${encodeURIComponent(deviceId)}`, {
+      method: "DELETE",
+    });
+  },
+
+  lookupTestingDevice(deviceId: string) {
+    return apiRequest<WebpanelTestingDeviceLookupResponse>(
+      `/v1/webpanel/testing-devices/lookup?deviceId=${encodeURIComponent(deviceId)}`,
+    );
+  },
+
+  getScreenFlow(filters?: {
+    from?: string;
+    to?: string;
+    appVersion?: string;
+    platform?: string;
+  }) {
+    const params = new URLSearchParams();
+
+    if (filters?.from) {
+      params.set("from", filters.from);
+    }
+    if (filters?.to) {
+      params.set("to", filters.to);
+    }
+    if (filters?.appVersion) {
+      params.set("appVersion", filters.appVersion);
+    }
+    if (filters?.platform) {
+      params.set("platform", filters.platform);
+    }
+
+    const query = params.toString();
+    return apiRequestRaw<unknown>(`/v2/admin/analytics/screen-flow${query ? `?${query}` : ""}`);
   },
 
   async getUserStats(userId: string) {

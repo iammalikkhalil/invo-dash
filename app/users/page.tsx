@@ -11,6 +11,7 @@ import Sidebar from "@/components/Sidebar";
 import UserCard from "@/components/UserCard";
 import { api, getErrorMessage, isUnauthorizedError } from "@/lib/api";
 import { clearAccessToken, isLoggedIn } from "@/lib/auth";
+import { formatCurrency } from "@/lib/format";
 import type {
   WebpanelTestingDeviceResponse,
   WebpanelUserWithStatsAndAnalyticsResponse,
@@ -21,6 +22,7 @@ type SortKey =
   | "createdAt"
   | "email"
   | "role"
+  | "country"
   | "invoicesAll"
   | "invoices30"
   | "overdue"
@@ -53,6 +55,7 @@ interface UserListRow {
   id: string;
   email: string;
   role: string;
+  primaryCountry: string | null;
   createdAt: string | null;
   createdAtTs: number | null;
   lastActivityAt: string | null;
@@ -147,6 +150,37 @@ function withinRange(value: number, range: NumericRange): boolean {
   return true;
 }
 
+interface UserSortColumn {
+  key: SortKey;
+  label: string;
+  align?: "left" | "right";
+}
+
+const USER_SORT_COLUMNS: UserSortColumn[] = [
+  { key: "email", label: "Email" },
+  { key: "role", label: "Role" },
+  { key: "country", label: "Country" },
+  { key: "invoicesAll", label: "Invo-All", align: "right" },
+  { key: "invoices30", label: "Invo-30d", align: "right" },
+  { key: "overdue", label: "Overdue", align: "right" },
+  { key: "paymentsAll", label: "Payments", align: "right" },
+  { key: "expensesAll", label: "Expenses", align: "right" },
+  { key: "invoiceTotalAll", label: "Invo-Total" },
+  { key: "lastActivity", label: "Last-Activity" },
+  { key: "createdAt", label: "Created" },
+];
+
+interface UserTableTotals {
+  users: number;
+  uniqueCountries: number;
+  invoicesAll: number;
+  invoices30: number;
+  overdue: number;
+  paymentsAll: number;
+  expensesAll: number;
+  invoiceTotalAll: number;
+}
+
 export default function UsersPage() {
   const router = useRouter();
 
@@ -188,6 +222,16 @@ export default function UsersPage() {
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleSortChange = useCallback((nextKey: SortKey) => {
+    if (sortKey === nextKey) {
+      setSortDirection((currentDirection) => (currentDirection === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(nextKey);
+    setSortDirection("desc");
+  }, [sortKey]);
 
   const handleUnauthorized = useCallback(() => {
     clearAccessToken({ sessionExpired: true });
@@ -270,6 +314,7 @@ export default function UsersPage() {
         id: user.id,
         email: user.email,
         role: user.role,
+        primaryCountry: countries[0] ?? null,
         createdAt: user.createdAt,
         createdAtTs: toTimestamp(user.createdAt),
         lastActivityAt,
@@ -455,6 +500,8 @@ export default function UsersPage() {
           return a.email.localeCompare(b.email) * direction;
         case "role":
           return a.role.localeCompare(b.role) * direction;
+        case "country":
+          return (a.primaryCountry ?? "").localeCompare(b.primaryCountry ?? "") * direction;
         case "createdAt":
           return ((a.createdAtTs ?? 0) - (b.createdAtTs ?? 0)) * direction;
         case "lastActivity":
@@ -556,6 +603,39 @@ export default function UsersPage() {
     const start = (currentPage - 1) * pageSize;
     return processedRows.slice(start, start + pageSize);
   }, [currentPage, pageSize, processedRows]);
+
+  const tableTotals = useMemo<UserTableTotals>(() => {
+    const totals = processedRows.reduce<UserTableTotals>(
+      (acc, row) => {
+        acc.invoicesAll += row.invoicesAll;
+        acc.invoices30 += row.invoices30;
+        acc.overdue += row.overdue;
+        acc.paymentsAll += row.paymentsAll;
+        acc.expensesAll += row.expensesAll;
+        acc.invoiceTotalAll += row.invoiceTotalAll;
+        return acc;
+      },
+      {
+        users: processedRows.length,
+        uniqueCountries: new Set(
+          processedRows.map((row) => row.primaryCountry).filter(Boolean),
+        ).size,
+        invoicesAll: 0,
+        invoices30: 0,
+        overdue: 0,
+        paymentsAll: 0,
+        expensesAll: 0,
+        invoiceTotalAll: 0,
+      },
+    );
+
+    totals.users = processedRows.length;
+    totals.uniqueCountries = new Set(
+      processedRows.map((row) => row.primaryCountry).filter(Boolean),
+    ).size;
+
+    return totals;
+  }, [processedRows]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -1236,35 +1316,6 @@ export default function UsersPage() {
                 </p>
                 <div className="users-toolbar-controls">
                   <label className="filter-control-inline">
-                    <span>Sort By</span>
-                    <select
-                      className="input"
-                      value={sortKey}
-                      onChange={(event) => setSortKey(event.target.value as SortKey)}
-                    >
-                      <option value="lastActivity">Last Activity</option>
-                      <option value="createdAt">Created</option>
-                      <option value="invoiceTotalAll">Invoice Total</option>
-                      <option value="invoicesAll">Invoices (All)</option>
-                      <option value="invoices30">Invoices (30d)</option>
-                      <option value="overdue">Overdue</option>
-                      <option value="paymentsAll">Payments</option>
-                      <option value="expensesAll">Expenses</option>
-                      <option value="role">Role</option>
-                      <option value="email">Email</option>
-                    </select>
-                  </label>
-
-                  <button
-                    type="button"
-                    style={{ alignSelf: "flex-end" }}
-                    className="btn btn-outline sort-dir-btn"
-                    onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
-                  >
-                    {sortDirection === "asc" ? "Asc" : "Desc"}
-                  </button>
-
-                  <label className="filter-control-inline">
                     <span>Rows</span>
                     <select
                       className="input"
@@ -1280,17 +1331,39 @@ export default function UsersPage() {
               </div>
 
               <div className="users-table">
-                <div className="users-table-head">
-                  <span>Email</span>
-                  <span>Role</span>
-                  <span>Invo-All</span>
-                  <span>Invo-30d</span>
-                  <span>Overdue</span>
-                  <span>Payments</span>
-                  <span>Expenses</span>
-                  <span>Invo-Total</span>
-                  <span>Last-Activity</span>
-                  <span>Created</span>
+                <div className="users-table-head-wrap">
+                  <div className="users-table-head">
+                    {USER_SORT_COLUMNS.map((column) => {
+                      const isActive = sortKey === column.key;
+                      const arrow = !isActive ? "↕" : sortDirection === "asc" ? "↑" : "↓";
+
+                      return (
+                        <button
+                          key={column.key}
+                          type="button"
+                          className={`users-table-head-button ${column.align === "right" ? "users-table-head-button-right" : ""} ${isActive ? "users-table-head-button-active" : ""}`}
+                          onClick={() => handleSortChange(column.key)}
+                          title={`Sort by ${column.label}`}
+                        >
+                          <span>{column.label}</span>
+                          <span className="users-table-head-arrow" aria-hidden="true">{arrow}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="users-table-summary">
+                    <span className="users-table-summary-cell">Users: {tableTotals.users}</span>
+                    <span className="users-table-summary-cell">-</span>
+                    <span className="users-table-summary-cell">Countries: {tableTotals.uniqueCountries}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{tableTotals.invoicesAll}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{tableTotals.invoices30}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{tableTotals.overdue}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{tableTotals.paymentsAll}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{tableTotals.expensesAll}</span>
+                    <span className="users-table-summary-cell users-table-summary-cell-right">{formatCurrency(tableTotals.invoiceTotalAll, "USD")}</span>
+                    <span className="users-table-summary-cell">-</span>
+                    <span className="users-table-summary-cell">-</span>
+                  </div>
                 </div>
                 <div className="users-table-body">
                   {pagedRows.map((row) => (
@@ -1299,6 +1372,7 @@ export default function UsersPage() {
                       row={{
                         email: row.email,
                         role: row.role,
+                        country: row.primaryCountry,
                         invoicesAll: row.invoicesAll,
                         invoices30: row.invoices30,
                         overdue: row.overdue,

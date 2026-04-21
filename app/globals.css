@@ -489,10 +489,6 @@ p {
   color: var(--color-text-muted);
 }
 
-.sort-dir-btn {
-  min-width: 64px;
-}
-
 .users-table {
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -501,18 +497,23 @@ p {
 }
 
 .users-table-head,
+.users-table-summary,
 .users-table-row {
   min-width: 1160px;
   display: grid;
-  grid-template-columns: 1.8fr 0.95fr 0.75fr 0.75fr 0.7fr 0.75fr 0.75fr 1.12fr 1.1fr 0.95fr;
+  grid-template-columns: 1.7fr 0.9fr 0.9fr 0.72fr 0.72fr 0.68fr 0.72fr 0.72fr 1.02fr 1.02fr 0.92fr;
   gap: 0.55rem;
   align-items: center;
 }
 
-.users-table-head {
+.users-table-head-wrap {
   position: sticky;
   top: 0;
   z-index: 1;
+  background: #f8fbff;
+}
+
+.users-table-head {
   background: #f8fbff;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-muted);
@@ -523,13 +524,67 @@ p {
   padding: 0.72rem 0.85rem;
 }
 
-.users-table-head span {
+.users-table-summary {
+  padding: 0.56rem 0.85rem;
+  background: linear-gradient(180deg, #f3f8ff 0%, #eef5ff 100%);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.users-table-head-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.18s ease;
 }
 
-.users-table-head span:nth-child(n + 3):nth-child(-n + 8) {
+.users-table-head-button:hover {
+  color: var(--color-primary);
+}
+
+.users-table-head-button-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.users-table-head-button-active {
+  color: var(--color-primary);
+}
+
+.users-table-head-arrow {
+  font-size: 0.82rem;
+  line-height: 1;
+  color: #88a0c7;
+  flex-shrink: 0;
+}
+
+.users-table-head-button-active .users-table-head-arrow {
+  color: var(--color-primary);
+}
+
+.users-table-summary-cell {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #49648f;
+}
+
+.users-table-summary-cell-right {
   text-align: right;
 }
 
@@ -559,6 +614,46 @@ p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.country-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.18rem 0.45rem 0.18rem 0.34rem;
+  border: 1px solid #d6e2f4;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--color-primary);
+  max-width: 100%;
+}
+
+.country-badge-flag-image {
+  width: 18px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(23, 78, 166, 0.08);
+  flex-shrink: 0;
+}
+
+.country-badge-flag-fallback {
+  width: 18px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #5f7aa8;
+  flex-shrink: 0;
+}
+
+.country-badge-code {
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #174ea6;
 }
 
 .users-cell-email {
@@ -591,6 +686,75 @@ p {
 
 .section-card h2 {
   font-size: 1.05rem;
+}
+
+.testing-devices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.testing-device-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.testing-device-lookup-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #fbfcff;
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.testing-device-lookup-card-success {
+  border-color: #bde7ce;
+  background: #eefaf3;
+}
+
+.testing-device-lookup-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.testing-device-lookup-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  word-break: break-all;
+}
+
+.testing-device-lookup-status {
+  font-size: 0.86rem;
+  color: var(--color-text);
+}
+
+.testing-device-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.24rem 0.6rem;
+  background: #e7f7ee;
+  border: 1px solid #bde7ce;
+  color: #1f6d3a;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.testing-device-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.testing-device-delete-btn {
+  border-color: #d99da3;
+  color: #9e2630;
 }
 
 .section-header {

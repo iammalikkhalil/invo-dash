@@ -16,12 +16,10 @@ interface InvoiceSenderReceiverProps {
   translations: InvoicePreviewTranslations;
 }
 
-function compactAddress(input: Array<string | null | undefined>): string | null {
-  const value = input
-    .map((part) => (part ?? "").trim())
-    .filter(Boolean)
-    .join(", ");
-  return value || null;
+function renderContactLines(fields: Array<string | null | undefined>): string[] {
+  return fields
+    .map((field) => (field ?? "").trim())
+    .filter((field): field is string => Boolean(field));
 }
 
 export default function InvoiceSenderReceiver({
@@ -31,18 +29,38 @@ export default function InvoiceSenderReceiver({
   template,
   translations,
 }: InvoiceSenderReceiverProps) {
-  const senderAddress = compactAddress([
+  const senderLocationLine = renderContactLines([
+    business.city,
+    business.state,
+    business.zipCode,
+    business.country,
+  ]).join(", ");
+
+  const senderLines = renderContactLines([
+    business.name,
+    business.shortName,
     business.addressLineOne,
     business.addressLineTwo,
-    compactAddress([business.city, business.state]),
-    compactAddress([business.zipCode, business.country]),
+    senderLocationLine || null,
+    business.phone ? `Phone: ${business.phone}` : null,
+    business.email ? `Email: ${business.email}` : null,
   ]);
 
-  const receiverAddress = compactAddress([
+  const receiverLocationLine = renderContactLines([
+    client?.city,
+    client?.state,
+    client?.zipCode,
+    client?.country,
+  ]).join(", ");
+
+  const receiverLines = renderContactLines([
+    client?.fullName,
+    client?.companyName,
     client?.addressLineOne,
     client?.addressLineTwo,
-    compactAddress([client?.city, client?.state]),
-    compactAddress([client?.zipCode, client?.country]),
+    receiverLocationLine || null,
+    client?.phone ? `Phone: ${client.phone}` : null,
+    client?.email ? `Email: ${client.email}` : null,
   ]);
 
   return (
@@ -50,10 +68,9 @@ export default function InvoiceSenderReceiver({
       {template.showSender ? (
         <article className={styles.block}>
           <h3 className={styles.blockHeader}>{translations.senderHeader}</h3>
-          <p className={styles.blockText}>{business.name}</p>
-          {senderAddress ? <p className={styles.blockText}>{senderAddress}</p> : null}
-          {business.phone ? <p className={styles.blockText}>Phone: {business.phone}</p> : null}
-          {business.email ? <p className={styles.blockText}>Email: {business.email}</p> : null}
+          {senderLines.map((line) => (
+            <p key={line} className={styles.blockText}>{line}</p>
+          ))}
         </article>
       ) : (
         <div />
@@ -62,11 +79,13 @@ export default function InvoiceSenderReceiver({
       {template.showReceiver ? (
         <article className={styles.block}>
           <h3 className={styles.blockHeader}>{translations.receiverHeader}</h3>
-          <p className={styles.blockText}>{client?.fullName || "-"}</p>
-          {client?.companyName ? <p className={styles.blockText}>{client.companyName}</p> : null}
-          {receiverAddress ? <p className={styles.blockText}>{receiverAddress}</p> : null}
-          {client?.phone ? <p className={styles.blockText}>Phone: {client.phone}</p> : null}
-          {client?.email ? <p className={styles.blockText}>Email: {client.email}</p> : null}
+          {receiverLines.length > 0 ? (
+            receiverLines.map((line) => (
+              <p key={line} className={styles.blockText}>{line}</p>
+            ))
+          ) : (
+            <p className={styles.blockText}>-</p>
+          )}
         </article>
       ) : (
         <div />

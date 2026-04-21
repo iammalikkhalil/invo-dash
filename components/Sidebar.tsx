@@ -11,19 +11,29 @@ const navItems = [
     isActive: (pathname: string) => pathname.startsWith("/users"),
   },
   {
-    label: "Invoice Preview",
-    href: "/invoice-preview",
-    isActive: (pathname: string) => pathname.startsWith("/invoice-preview"),
-  },
-  {
     label: "Inventory Items",
     href: "/inventory-items",
     isActive: (pathname: string) => pathname.startsWith("/inventory-items"),
   },
   {
+    label: "Invoice Preview",
+    href: "/invoice-preview",
+    isActive: (pathname: string) => pathname.startsWith("/invoice-preview"),
+  },
+  {
     label: "Ip Stats",
     href: "/ip-stats",
     isActive: (pathname: string) => pathname.startsWith("/ip-stats"),
+  },
+  {
+    label: "Screen Flow",
+    href: "/screen-flow",
+    isActive: (pathname: string) => pathname.startsWith("/screen-flow"),
+  },
+  {
+    label: "Testing Devices",
+    href: "/testing-devices",
+    isActive: (pathname: string) => pathname.startsWith("/testing-devices"),
   },
 ] as const;
 
