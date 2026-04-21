@@ -33,11 +33,12 @@ function compactEmail(email: string, maxLength = 24): string {
 }
 
 export default function UserCard({ row, onClick }: UserCardProps) {
-  const countryCode = row.country?.trim().toUpperCase() || null;
+  const normalizedCountry = row.country?.trim().toUpperCase();
+  const countryCode = normalizedCountry || undefined;
   const flagUrl =
     countryCode && /^[A-Z]{2}$/.test(countryCode)
       ? `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
-      : null;
+      : undefined;
 
   return (
     <button type="button" className="users-table-row" onClick={onClick}>
@@ -46,7 +47,7 @@ export default function UserCard({ row, onClick }: UserCardProps) {
       </span>
       <span className="users-cell">{row.role}</span>
       <span className="users-cell">
-        {row.country ? (
+        {countryCode ? (
           <span className="country-badge" title={countryCode}>
             {flagUrl ? (
               <img
