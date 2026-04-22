@@ -14,7 +14,7 @@ interface UseScreenFlowResult {
 
 export function useScreenFlow(initialQuery: ScreenFlowQuery): UseScreenFlowResult {
   const [data, setData] = useState<ScreenFlowResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(initialQuery.from && initialQuery.to));
   const [error, setError] = useState("");
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -45,6 +45,11 @@ export function useScreenFlow(initialQuery: ScreenFlowQuery): UseScreenFlowResul
   }, []);
 
   useEffect(() => {
+    if (!initialQuery.from || !initialQuery.to) {
+      setLoading(false);
+      return;
+    }
+
     void refetch(initialQuery);
   }, [initialQuery, refetch]);
 

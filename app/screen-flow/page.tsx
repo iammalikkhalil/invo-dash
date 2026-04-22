@@ -1,5 +1,4 @@
-import Sidebar from "@/components/Sidebar";
-import { ScreenFlowDashboard } from "@/features/screen-flow";
+import ScreenFlowPageClient from "@/app/screen-flow/ScreenFlowPageClient";
 
 export const metadata = {
   title: "Screen Flow | invotics",
@@ -7,12 +6,5 @@ export const metadata = {
 };
 
 export default function ScreenFlowPage() {
-  return (
-    <main className="app-shell">
-      <Sidebar />
-      <div className="app-main">
-        <ScreenFlowDashboard />
-      </div>
-    </main>
-  );
+  return <ScreenFlowPageClient />;
 }

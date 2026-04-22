@@ -213,6 +213,32 @@ export interface WebpanelTestingDeviceLookupResponse {
   isTestingDevice: boolean;
 }
 
+export interface AppFlowTimelineEvent {
+  eventName: string;
+  screenName: string | null;
+  timestamp: string;
+  gapSec: number;
+}
+
+export interface AppFlowTimelineSession {
+  sessionId: string;
+  startTime: string;
+  endTime: string | null;
+  totalEvents: number;
+  events: AppFlowTimelineEvent[];
+}
+
+export interface AppFlowTimelineResponse {
+  deviceId: string | null;
+  userId: string | null;
+  appVersion: string | null;
+  from: string | null;
+  to: string | null;
+  totalSessions: number;
+  totalEvents: number;
+  sessions: AppFlowTimelineSession[];
+}
+
 export interface WebpanelUserResponse {
   id: UUID;
   email: string;

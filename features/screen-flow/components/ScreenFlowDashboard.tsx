@@ -60,8 +60,8 @@ export function ScreenFlowDashboard() {
 
   const requestQuery = useMemo(
     () => ({
-      from: toUtcIso(submittedQuery.from) || new Date().toISOString(),
-      to: toUtcIso(submittedQuery.to) || new Date().toISOString(),
+      from: toUtcIso(submittedQuery.from) || "",
+      to: toUtcIso(submittedQuery.to) || "",
       appVersion: submittedQuery.appVersion.trim(),
       platform: submittedQuery.platform,
     }),

@@ -11,6 +11,7 @@ import type {
   WebpanelUserWithStatsAndAnalyticsResponse,
   WebpanelUserWithStatsResponse,
   WebpanelUserStatsResponse,
+  AppFlowTimelineResponse,
 } from "@/lib/types";
 import type {
   IpStatsResponse,
@@ -238,6 +239,37 @@ export const api = {
 
     const query = params.toString();
     return apiRequestRaw<unknown>(`/v2/admin/analytics/screen-flow${query ? `?${query}` : ""}`);
+  },
+
+  getAppFlowTimeline(filters: {
+    deviceId?: string;
+    userId?: string;
+    appVersion?: string;
+    from?: string;
+    to?: string;
+  }) {
+    const params = new URLSearchParams();
+
+    if (filters.deviceId) {
+      params.set("deviceId", filters.deviceId);
+    }
+    if (filters.userId) {
+      params.set("userId", filters.userId);
+    }
+    if (filters.appVersion) {
+      params.set("appVersion", filters.appVersion);
+    }
+    if (filters.from) {
+      params.set("from", filters.from);
+    }
+    if (filters.to) {
+      params.set("to", filters.to);
+    }
+
+    const query = params.toString();
+    return apiRequestRaw<AppFlowTimelineResponse>(
+      `/v2/admin/analytics/timeline${query ? `?${query}` : ""}`,
+    );
   },
 
   async getUserStats(userId: string) {
