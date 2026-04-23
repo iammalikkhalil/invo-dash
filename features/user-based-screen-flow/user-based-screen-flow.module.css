@@ -86,6 +86,30 @@
   display: block;
 }
 
+.v2Legend {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4d6387;
+}
+
+.legendIcon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
 .graphSessionLabel {
   font-size: 10px;
   font-weight: 800;
